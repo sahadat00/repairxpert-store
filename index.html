@@ -11,7 +11,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:8px;bor
 h1{font-size:20px;margin:0}h1 span{color:var(--ac)}
 button,input,select{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:9px 11px}
 button{cursor:pointer}button.p{background:var(--ac);border-color:var(--ac);color:#fff}
-#q{width:100%;margin:12px 0 8px;font-size:16px}
+#q{flex:1;min-width:0;margin:0;font-size:16px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}.chips button{white-space:nowrap;padding:6px 12px;border-radius:99px}.chips .on{background:var(--ac);border-color:var(--ac);color:#fff}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-top:10px}.card h3{margin:0 0 2px;font-size:16px}
 .mu{color:var(--mu);font-size:13px}
@@ -27,7 +27,7 @@ td input{width:70px;padding:5px}td input.wd{width:100%;margin-top:4px;font-size:
 <div id="lg"></div>
 <div id="app" style="display:none">
 <div class="chips" id="nav" style="margin-top:10px"></div>
-<div id="v_store"><input id="q" placeholder="Search: Samsung A51, BN54 ..." oninput="search()"><div class="chips" id="cats"></div><div id="res"></div></div>
+<div id="v_store"><div style="display:flex;gap:8px;margin:12px 0 8px"><input id="q" placeholder="Search: Samsung A51, BN54 ..." oninput="search()"><button id="plus" class="p" style="display:none;font-size:22px;line-height:1;padding:6px 15px" onclick="togAdd()">＋</button></div><div id="addbox" style="display:none"></div><div class="chips" id="cats"></div><div id="res"></div></div>
 <div id="v_approval" style="display:none"><div id="ppl"></div></div>
 <div id="v_admin" style="display:none"><div id="adm"></div></div>
 <div id="v_sec" style="display:none"><div id="acc"></div></div>
@@ -105,15 +105,17 @@ function draw(){
  document.getElementById("cats").innerHTML=cats.map(function(c){return'<button class="'+(c==cat?"on":"")+'" onclick="sel(\''+c+'\')">'+c+'</button>'}).join("");
  document.getElementById("auth").innerHTML='<span class="mu">'+(admin?"Admin":"Viewer")+'</span> <button onclick="logout()">Logout</button>'}
 function forms(){
- document.getElementById("adm").innerHTML=admin?'<div class="card"><h3>নতুন প্রাইস যোগ করুন</h3><div class="row"><select id="nc" onchange="catChg()"><option>Display</option><option>Back Part</option><option>Middle Part</option><option>Button</option><option>Battery</option></select><input id="nm" placeholder="Model (Samsung A51)"></div><input id="nn" placeholder="Note (ঐচ্ছিক)" style="width:100%;margin-top:6px"><p class="mu">যে কোয়ালিটি আছে শুধু তার Buy/Sale লিখুন, টিক নিজে পড়ে যাবে।</p><div id="qs"></div><div class="row"><button class="p" onclick="add()">Add</button></div></div><div class="card"><h3>Backup / Restore</h3><p class="mu">Backup: সব ডেটা CSV ফাইল হয়ে নামবে। Restore: আগের Backup ফাইল আপলোড করলে যেগুলো নেই সেগুলো ফিরে আসবে, যেগুলো আছে দ্বিগুণ হবে না।</p><div class="row"><button class="p" onclick="backup()">⬇ Backup CSV</button><button onclick="document.getElementById(\'rf\').click()">⬆ Restore CSV</button></div><input id="rf" type="file" accept=".csv" style="display:none" onchange="restore(this)"></div><div class="card"><h3>কম্প্যাটিবল গ্রুপ</h3><p class="mu">যেসব মডেল একই পার্টে মেলে, কমা দিয়ে লিখুন</p><div class="row"><input id="gm" placeholder="Samsung A51, Samsung M31s"><button class="p" onclick="addG()">Save</button></div></div>':"";
+ document.getElementById("addbox").innerHTML=admin?'<div class="card"><h3>নতুন প্রাইস যোগ করুন</h3><div class="row"><select id="nc" onchange="catChg()"><option>Display</option><option>Back Part</option><option>Middle Part</option><option>Button</option><option>Battery</option></select><input id="nm" placeholder="Model (Samsung A51)"></div><input id="nn" placeholder="Note (ঐচ্ছিক)" style="width:100%;margin-top:6px"><p class="mu">যে কোয়ালিটি আছে শুধু তার Buy/Sale লিখুন, টিক নিজে পড়ে যাবে।</p><div id="qs"></div><div class="row"><button class="p" onclick="add()">Add</button><button onclick="togAdd()">Close</button></div></div>':"";document.getElementById("plus").style.display=admin?"block":"none";
+ document.getElementById("adm").innerHTML=admin?'<div class="card"><h3>Backup / Restore</h3><p class="mu">Backup: সব ডেটা CSV ফাইল হয়ে নামবে। Restore: আগের Backup ফাইল আপলোড করলে যেগুলো নেই সেগুলো ফিরে আসবে, যেগুলো আছে দ্বিগুণ হবে না।</p><div class="row"><button class="p" onclick="backup()">⬇ Backup CSV</button><button onclick="document.getElementById(\'rf\').click()">⬆ Restore CSV</button></div><input id="rf" type="file" accept=".csv" style="display:none" onchange="restore(this)"></div><div class="card"><h3>কম্প্যাটিবল গ্রুপ</h3><p class="mu">যেসব মডেল একই পার্টে মেলে, কমা দিয়ে লিখুন</p><div class="row"><input id="gm" placeholder="Samsung A51, Samsung M31s"><button class="p" onclick="addG()">Save</button></div></div>':"";
  document.getElementById("acc").innerHTML='<div class="card"><h3>🔒 Security — পাসওয়ার্ড বদলান</h3><div class="row"><input id="np" type="password" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"><button class="p" onclick="chPw()">Change</button></div></div>';if(admin)qrows()}
 async function chPw(){var p=v("np");if(p.length<6){alert("কমপক্ষে ৬ অক্ষর দিন");return}
  var r=await fetch(U+"/auth/v1/user",{method:"PUT",headers:H(),body:JSON.stringify({password:p})});
  alert(r.ok?"পাসওয়ার্ড বদলে গেছে":"হয়নি, Logout করে আবার Login দিয়ে চেষ্টা করুন");document.getElementById("np").value=""}
 async function upd(ix,f,val,re){var r=rows[ix],o={};o[f]=val;r[f]=val;await api("items?id=eq."+r.id,{method:"PATCH",body:JSON.stringify(o)});if(re)draw()}
 async function del(ix){if(!confirm("মুছে ফেলবেন?"))return;await api("items?id=eq."+rows[ix].id,{method:"DELETE"});run()}
-var QP={Display:["AMOLED","OLED","IPS","Incell","Original"],Battery:["Original","Copy"]};
+var QP={Display:["AMOLED","IPS","Original"],Battery:["Original","Copy"]};
 function qlist(){return(QP[v("nc")]||["Original","Copy"]).concat([""])}
+function togAdd(){var b=document.getElementById("addbox");b.style.display=b.style.display=="none"?"block":"none"}
 function catChg(){document.getElementById("nm").placeholder=v("nc")=="Battery"?"Battery model (BN54)":"Model (Samsung A51)";qrows()}
 function qrows(){var h="";qlist().forEach(function(q,i){var t='oninput="document.getElementById(\'c'+i+'\').checked=true"';
  h+='<div class="qr"><label><input type="checkbox" id="c'+i+'"> '+(q?esc(q):'<input id="x'+i+'" placeholder="অন্য কোয়ালিটি (ঐচ্ছিক)">')+'</label><input id="b'+i+'" type="number" placeholder="Buy" '+t+'><input id="s'+i+'" type="number" placeholder="Sale" '+t+'><input id="w'+i+'" placeholder="⚠ সতর্কতা (ঐচ্ছিক)"></div>'});

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="bn"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Repair Xpert — Parts Price</title>
+<style>
+:root{--bg:#0b0b0c;--card:#17171a;--tx:#f5f5f5;--mu:#a1a1aa;--bd:#2a2a2e;--ac:#e11d2e;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,"Noto Sans Bengali",sans-serif}
+.w{max-width:640px;margin:0 auto;padding:14px}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:2px solid var(--ac);padding-bottom:10px}
+.brand{display:flex;align-items:center;gap:10px}.brand img{height:38px;border-radius:6px}
+h1{font-size:20px;margin:0}h1 span{color:var(--ac)}
+button,input,select{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:9px 11px}
+button{cursor:pointer}button.p{background:var(--ac);border-color:var(--ac);color:#fff}
+#q{width:100%;margin:12px 0 8px;font-size:16px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}.chips button{white-space:nowrap;padding:6px 12px;border-radius:99px}.chips .on{background:var(--ac);border-color:var(--ac);color:#fff}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-top:10px}.card h3{margin:0 0 2px;font-size:16px}
+.mu{color:var(--mu);font-size:13px}
+.badge{display:inline-block;background:#22c55e22;color:#22c55e;border-radius:99px;padding:2px 9px;font-size:12px;margin:4px 0}
+.wr{color:#f59e0b;font-size:13px;margin-top:2px}
+table{width:100%;border-collapse:collapse;margin-top:6px}th,td{text-align:left;padding:6px 4px;border-top:1px solid var(--bd);font-size:14px;vertical-align:top}th{color:var(--mu);font-weight:500;font-size:12px}
+td input{width:70px;padding:5px}td input.wd{width:100%;margin-top:4px;font-size:12px}.q{font-weight:600}
+.av,.na{border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap;border:1px solid;display:inline-block}
+.av{color:#22c55e;background:#22c55e22;border-color:#22c55e}.na{color:#ef4444;background:#ef444422;border-color:#ef4444}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.row>*{flex:1 1 90px}
+</style></head><body><div class="w">
+<header><div class="brand"><img src="logo.png" alt="" onerror="this.style.display='none'"><h1>Repair <span>Xpert</span></h1></div><span id="auth"></span></header>
+<div id="lg"></div>
+<div id="app" style="display:none">
+<input id="q" placeholder="Search: Samsung A51, BN54 ..." oninput="search()">
+<div class="chips" id="cats"></div>
+<div id="ppl"></div><div id="res"></div><div id="adm"></div><div id="acc"></div>
+</div></div>
+<script>
+var U="https://cqbrtfeanazgttrlwwfz.supabase.co",K="sb_publishable_5WAikUK2dcYDTMq5phbJeg_nZvjnaH6";
+var SHOW_BUY=false; // true করলে Viewer-ও Buy প্রাইস দেখবে
+var tok=null,rt=null,admin=false,cat="All",groups=[],rows=[],timer;
+var cats=["All","Display","Back Part","Middle Part","Button","Battery"];
+function v(i){return document.getElementById(i).value}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+try{rt=localStorage.getItem("rt")}catch(e){}
+function saveRt(){try{rt?localStorage.setItem("rt",rt):localStorage.removeItem("rt")}catch(e){}}
+function H(){var h={apikey:K,"Content-Type":"application/json"};if(tok)h.Authorization="Bearer "+tok;return h}
+async function api(p,o,n){o=o||{};var r=await fetch(U+"/rest/v1/"+p,{method:o.method||"GET",headers:H(),body:o.body});
+ if(r.status==401&&rt&&!n){await refresh();return api(p,o,1)}
+ if(!r.ok){alert("Error "+r.status);return null}
+ return r.status==204?[]:r.json().catch(function(){return[]})}
+async function refresh(){if(!rt)return;var r=await fetch(U+"/auth/v1/token?grant_type=refresh_token",{method:"POST",headers:{apikey:K,"Content-Type":"application/json"},body:JSON.stringify({refresh_token:rt})});
+ if(r.ok){var d=await r.json();tok=d.access_token;rt=d.refresh_token}else{tok=null;rt=null}saveRt()}
+async function auth(kind){var e=v("em").trim(),p=v("pw");if(!e||p.length<6){alert("Email দিন, পাসওয়ার্ড কমপক্ষে ৬ অক্ষর");return}
+ var u=kind=="in"?"/auth/v1/token?grant_type=password":"/auth/v1/signup";
+ var r=await fetch(U+u,{method:"POST",headers:{apikey:K,"Content-Type":"application/json"},body:JSON.stringify({email:e,password:p})});
+ var d=await r.json().catch(function(){return{}});
+ if(!r.ok||!d.access_token){alert(r.ok?"ইমেইলে কনফার্মেশন লিংক পাঠানো হয়েছে":(d.msg||d.error_description||"ব্যর্থ হয়েছে"));return}
+ tok=d.access_token;rt=d.refresh_token;saveRt();start()}
+function logout(){tok=null;rt=null;admin=false;saveRt();gate()}
+function gate(){document.getElementById("app").style.display="none";document.getElementById("auth").innerHTML="";
+ document.getElementById("lg").innerHTML='<div class="card"><h3>Login</h3><p class="mu">Email ও পাসওয়ার্ড দিয়ে ঢুকুন। নতুন হলে Sign up চাপুন।</p><div class="row"><input id="em" type="email" placeholder="Gmail"><input id="pw" type="password" placeholder="Password"></div><div class="row"><button class="p" onclick="auth(\'in\')">Login</button><button onclick="auth(\'up\')">Sign up</button></div></div>'}
+async function who(){var r=await fetch(U+"/auth/v1/user",{headers:H()});var d=await r.json().catch(function(){return{}});return(d.email||"").toLowerCase()}
+function wait(s){document.getElementById("app").style.display="none";
+ document.getElementById("auth").innerHTML='<button onclick="logout()">Logout</button>';
+ document.getElementById("lg").innerHTML='<div class="card"><h3>'+(s=="blocked"?"অ্যাক্সেস দেওয়া হয়নি":"অনুমোদনের অপেক্ষায়")+'</h3><p class="mu">'+(s=="blocked"?"অ্যাডমিনের সাথে যোগাযোগ করুন।":"আপনার অনুরোধ অ্যাডমিনের কাছে গেছে। অনুমোদন পেলে নিচের বাটনে চাপ দিন।")+'</p><div class="row"><button class="p" onclick="start()">আবার চেক করুন</button></div></div>'}
+async function start(){document.getElementById("lg").innerHTML="";
+ var a=await api("admins?select=email");admin=!!(a&&a.length);
+ if(!admin){var me=await who(),s=await api("viewers?select=status&email=eq."+encodeURIComponent(me));
+  if(s&&!s.length){await api("viewers",{method:"POST",body:JSON.stringify({email:me})});s=[{status:"pending"}]}
+  if(!s||s[0].status!="approved"){wait(s&&s[0]?s[0].status:"pending");return}}
+ document.getElementById("app").style.display="block";
+ groups=await api("groups?select=models")||[];forms();run();if(admin)people()}
+var ppl=[];
+async function people(){ppl=(await api("viewers?select=*&order=created_at.desc")||[]).sort(function(a,b){return(a.status=="pending"?0:1)-(b.status=="pending"?0:1)});
+ var n=ppl.filter(function(x){return x.status=="pending"}).length,h='<div class="card"><h3>Viewer অনুমোদন'+(n?' <span class="na">'+n+' নতুন</span>':'')+'</h3>';
+ if(!ppl.length)h+='<p class="mu">এখনো কেউ জয়েন করেনি</p>';
+ ppl.forEach(function(x,i){var b=x.status=="approved"?'<button onclick="setV('+i+',\'blocked\')">Remove</button>':'<button class="p" onclick="setV('+i+',\'approved\')">✔ Approve</button>'+(x.status=="pending"?' <button onclick="setV('+i+',\'blocked\')">✖ Reject</button>':'');
+  h+='<div class="row" style="align-items:center"><span style="flex:3 1 150px;word-break:break-all">'+esc(x.email)+' <span class="mu">('+x.status+')</span></span><span>'+b+'</span></div>'});
+ document.getElementById("ppl").innerHTML=h+'</div>'}
+async function setV(i,s){await api("viewers?email=eq."+encodeURIComponent(ppl[i].email),{method:"PATCH",body:JSON.stringify({status:s})});people()}
+function search(){clearTimeout(timer);timer=setTimeout(run,250)}
+async function run(){
+ var q=v("q").toLowerCase().replace(/display|back part|middle part|button|battery/g,"").replace(/[(),*"]/g,"").trim();
+ var p="items?select=*&order=model,category&limit=60"+(cat=="All"?"":"&category=eq."+encodeURIComponent(cat));
+ if(q){var M=[];groups.forEach(function(g){if(g.models.some(function(m){return m.toLowerCase().indexOf(q)>-1}))M=M.concat(g.models)});
+  var or=["model.ilike.*"+q+"*"];if(M.length)or.push("model.in.("+M.map(function(m){return'"'+m+'"'}).join(",")+")");
+  p+="&or="+encodeURIComponent("("+or.join(",")+")")}
+ rows=await api(p)||[];draw()}
+function sel(c){cat=c;run()}
+function draw(){
+ var by={},showB=admin||SHOW_BUY;
+ rows.forEach(function(r,ix){var k=r.model+"|"+r.category;(by[k]=by[k]||[]).push(ix)});
+ var h="";
+ Object.keys(by).forEach(function(k){var p=k.split("|"),g=groups.filter(function(g){return g.models.indexOf(p[0])>-1})[0];
+  h+='<div class="card"><h3>'+esc(p[0])+' — '+p[1]+'</h3>';
+  if(g&&g.models.length>1)h+='<span class="badge">✔ মেলে: '+g.models.filter(function(x){return x!=p[0]}).map(esc).join(", ")+'</span>';
+  h+='<table><tr><th>Quality</th>'+(showB?'<th>Buy</th>':'')+'<th>Sale</th><th>Status</th></tr>';
+  by[k].forEach(function(ix){var r=rows[ix];
+   h+='<tr><td class="q">'+esc(r.quality||"—")+(r.note?'<div class="mu">'+esc(r.note)+'</div>':'');
+   if(admin)h+='<input class="wd" placeholder="⚠ সতর্কতা/রিকোয়ারমেন্ট" value="'+esc(r.warn)+'" onchange="upd('+ix+',\'warn\',this.value)">';
+   else if(r.warn)h+='<div class="wr">⚠ '+esc(r.warn)+'</div>';
+   h+='</td>';
+   if(admin)h+='<td><input type="number" value="'+r.buy+'" onchange="upd('+ix+',\'buy\',+this.value)"></td><td><input type="number" value="'+r.sale+'" onchange="upd('+ix+',\'sale\',+this.value)"></td><td><button class="'+(r.available?"av":"na")+'" onclick="upd('+ix+',\'available\','+!r.available+',1)">'+(r.available?"Available":"Not Available")+'</button> <button onclick="del('+ix+')">🗑</button></td>';
+   else h+=(showB?'<td>৳'+r.buy+'</td>':'')+'<td>৳'+r.sale+'</td><td><span class="'+(r.available?"av":"na")+'">'+(r.available?"Available":"Not Available")+'</span></td>';
+   h+='</tr>'});h+='</table></div>'});
+ document.getElementById("res").innerHTML=h||'<p class="mu">কিছু পাওয়া যায়নি</p>';
+ document.getElementById("cats").innerHTML=cats.map(function(c){return'<button class="'+(c==cat?"on":"")+'" onclick="sel(\''+c+'\')">'+c+'</button>'}).join("");
+ document.getElementById("auth").innerHTML=(admin?'<button class="p" onclick="document.getElementById(\'adm\').scrollIntoView({behavior:\'smooth\'})">＋ Add</button> ':'')+'<span class="mu">'+(admin?"Admin":"Viewer")+'</span> <button onclick="logout()">Logout</button>'}
+function forms(){
+ document.getElementById("adm").innerHTML=admin?'<div class="card"><h3>নতুন প্রাইস যোগ করুন</h3><div class="row"><select id="nc" onchange="document.getElementById(\'nm\').placeholder=this.value==\'Battery\'?\'Battery model (BN54)\':\'Model (Samsung A51)\'"><option>Display</option><option>Back Part</option><option>Middle Part</option><option>Button</option><option>Battery</option></select><input id="nm" placeholder="Model (Samsung A51)"><input id="nq" placeholder="Quality (AMOLED / IPS / Original)"><input id="nw" placeholder="⚠ সতর্কতা (যেমন IPS-এ ফিঙ্গারপ্রিন্ট কাজ করে না)"><input id="nn" placeholder="Note (ঐচ্ছিক)"><input id="nb" type="number" placeholder="Buy"><input id="ns" type="number" placeholder="Sale"><select id="na"><option value="1">Available</option><option value="0">Not Available</option></select></div><div class="row"><button class="p" onclick="add()">Add</button><button onclick="backup()">Backup CSV</button></div></div><div class="card"><h3>কম্প্যাটিবল গ্রুপ</h3><p class="mu">যেসব মডেল একই পার্টে মেলে, কমা দিয়ে লিখুন</p><div class="row"><input id="gm" placeholder="Samsung A51, Samsung M31s"><button class="p" onclick="addG()">Save</button></div></div>':"";
+ document.getElementById("acc").innerHTML='<div class="card"><h3>পাসওয়ার্ড বদলান</h3><div class="row"><input id="np" type="password" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"><button class="p" onclick="chPw()">Change</button></div></div>'}
+async function chPw(){var p=v("np");if(p.length<6){alert("কমপক্ষে ৬ অক্ষর দিন");return}
+ var r=await fetch(U+"/auth/v1/user",{method:"PUT",headers:H(),body:JSON.stringify({password:p})});
+ alert(r.ok?"পাসওয়ার্ড বদলে গেছে":"হয়নি, Logout করে আবার Login দিয়ে চেষ্টা করুন");document.getElementById("np").value=""}
+async function upd(ix,f,val,re){var r=rows[ix],o={};o[f]=val;r[f]=val;await api("items?id=eq."+r.id,{method:"PATCH",body:JSON.stringify(o)});if(re)draw()}
+async function del(ix){if(!confirm("মুছে ফেলবেন?"))return;await api("items?id=eq."+rows[ix].id,{method:"DELETE"});run()}
+async function add(){if(!v("nm").trim())return;
+ await api("items",{method:"POST",body:JSON.stringify({model:v("nm").trim(),category:v("nc"),quality:v("nq").trim(),warn:v("nw").trim(),note:v("nn").trim(),buy:+v("nb")||0,sale:+v("ns")||0,available:v("na")=="1"})});
+ document.getElementById("q").value=v("nm");run()}
+async function addG(){var m=v("gm").split(",").map(function(x){return x.trim()}).filter(Boolean);if(m.length<2)return;
+ await api("groups",{method:"POST",body:JSON.stringify({models:m})});groups=await api("groups?select=models")||[];run()}
+async function backup(){var d=await api("items?select=*&limit=10000")||[];
+ var c="model,category,quality,buy,sale,available,warn,note\n"+d.map(function(r){return[r.model,r.category,r.quality,r.buy,r.sale,r.available,r.warn,r.note].map(function(x){return'"'+String(x==null?"":x).replace(/"/g,'""')+'"'}).join(",")}).join("\n");
+ var a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+c],{type:"text/csv"}));a.download="repairxpert-backup-"+new Date().toISOString().slice(0,10)+".csv";a.click()}
+(async function(){await refresh();tok?start():gate()})();
+</script></body></html>

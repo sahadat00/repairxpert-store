@@ -67,7 +67,7 @@ async function start(){document.getElementById("lg").innerHTML="";
   if(s&&!s.length){await api("viewers",{method:"POST",body:JSON.stringify({email:me})});s=[{status:"pending"}]}
   if(!s||s[0].status!="approved"){wait(s&&s[0]?s[0].status:"pending");return}}
  document.getElementById("app").style.display="block";
- groups=await api("groups?select=models")||[];forms();run();if(admin)people();setView("store")}
+ groups=await api("groups?select=models")||[];if(admin)opts=await api("options?select=*&order=pos")||[];forms();run();if(admin)people();setView("store")}
 var ppl=[];
 async function people(){ppl=(await api("viewers?select=*&order=created_at.desc")||[]).sort(function(a,b){return(a.status=="pending"?0:1)-(b.status=="pending"?0:1)});
  var n=ppl.filter(function(x){return x.status=="pending"}).length,h='<div class="card"><h3>Viewer অনুমোদন'+(n?' <span class="na">'+n+' নতুন</span>':'')+'</h3>';
@@ -92,7 +92,7 @@ function draw(){
  Object.keys(by).forEach(function(k){var p=k.split("|"),g=groups.filter(function(g){return g.models.indexOf(p[0])>-1})[0];
   h+='<div class="card"><h3>'+esc(p[0])+' — '+p[1]+'</h3>';
   if(g&&g.models.length>1)h+='<span class="badge">✔ মেলে: '+g.models.filter(function(x){return x!=p[0]}).map(esc).join(", ")+'</span>';
-  h+='<table><tr><th>Quality</th>'+(showB?'<th>Buy</th>':'')+'<th>Sale</th><th>Status</th></tr>';
+  h+='<table><tr><th>Type / Color</th>'+(showB?'<th>Buy</th>':'')+'<th>Sale</th><th>Status</th></tr>';
   by[k].forEach(function(ix){var r=rows[ix];
    h+='<tr><td class="q">'+esc(r.quality||"—")+(r.note?'<div class="mu">'+esc(r.note)+'</div>':'');
    if(admin)h+='<input class="wd" placeholder="⚠ সতর্কতা/রিকোয়ারমেন্ট" value="'+esc(r.warn)+'" onchange="upd('+ix+',\'warn\',this.value)">';
@@ -105,16 +105,17 @@ function draw(){
  document.getElementById("cats").innerHTML=cats.map(function(c){return'<button class="'+(c==cat?"on":"")+'" onclick="sel(\''+c+'\')">'+c+'</button>'}).join("");
  document.getElementById("auth").innerHTML='<span class="mu">'+(admin?"Admin":"Viewer")+'</span> <button onclick="logout()">Logout</button>'}
 function forms(){
- document.getElementById("addbox").innerHTML=admin?'<div class="card"><h3>নতুন প্রাইস যোগ করুন</h3><div class="row"><select id="nc" onchange="catChg()"><option>Display</option><option>Back Part</option><option>Middle Part</option><option>Button</option><option>Battery</option></select><input id="nm" placeholder="Model (Samsung A51)"></div><input id="nn" placeholder="Note (ঐচ্ছিক)" style="width:100%;margin-top:6px"><p class="mu">যে কোয়ালিটি আছে শুধু তার Buy/Sale লিখুন, টিক নিজে পড়ে যাবে।</p><div id="qs"></div><div class="row"><button class="p" onclick="add()">Add</button><button onclick="togAdd()">Close</button></div></div>':"";document.getElementById("plus").style.display=admin?"block":"none";
- document.getElementById("adm").innerHTML=admin?'<div class="card"><h3>Backup / Restore</h3><p class="mu">Backup: সব ডেটা CSV ফাইল হয়ে নামবে। Restore: আগের Backup ফাইল আপলোড করলে যেগুলো নেই সেগুলো ফিরে আসবে, যেগুলো আছে দ্বিগুণ হবে না।</p><div class="row"><button class="p" onclick="backup()">⬇ Backup CSV</button><button onclick="document.getElementById(\'rf\').click()">⬆ Restore CSV</button></div><input id="rf" type="file" accept=".csv" style="display:none" onchange="restore(this)"></div><div class="card"><h3>কম্প্যাটিবল গ্রুপ</h3><p class="mu">যেসব মডেল একই পার্টে মেলে, কমা দিয়ে লিখুন</p><div class="row"><input id="gm" placeholder="Samsung A51, Samsung M31s"><button class="p" onclick="addG()">Save</button></div></div>':"";
- document.getElementById("acc").innerHTML='<div class="card"><h3>🔒 Security — পাসওয়ার্ড বদলান</h3><div class="row"><input id="np" type="password" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"><button class="p" onclick="chPw()">Change</button></div></div>';if(admin)qrows()}
+ document.getElementById("addbox").innerHTML=admin?'<div class="card"><h3>নতুন প্রাইস যোগ করুন</h3><div class="row"><select id="nc" onchange="catChg()"><option>Display</option><option>Back Part</option><option>Middle Part</option><option>Button</option><option>Battery</option></select><input id="nm" placeholder="Model (Samsung A51)"></div><input id="nn" placeholder="Note (ঐচ্ছিক)" style="width:100%;margin-top:6px"><p class="mu">যে কোয়ালিটি আছে শুধু তার Buy/Sale লিখুন, টিক নিজে পড়ে যাবে।</p><div id="qs"></div><div class="row"><input id="no" placeholder="নতুন কালার/কোয়ালিটি লিখুন"><button onclick="addOpt()">＋ অপশন যোগ</button></div><div class="row"><button class="p" onclick="add()">Add</button><button onclick="togAdd()">Close</button></div></div>':"";document.getElementById("plus").style.display=admin?"block":"none";
+ document.getElementById("adm").innerHTML=admin?'<div class="card"><h3>অপশন তালিকা (কালার / কোয়ালিটি)</h3><p class="mu">মুছতে ✕ চাপুন। নতুন যোগ করতে Store-এর ＋ ফর্মে "অপশন যোগ" ব্যবহার করুন।</p><div id="optl"></div></div><div class="card"><h3>Backup / Restore</h3><p class="mu">Backup: সব ডেটা CSV ফাইল হয়ে নামবে। Restore: আগের Backup ফাইল আপলোড করলে যেগুলো নেই সেগুলো ফিরে আসবে, যেগুলো আছে দ্বিগুণ হবে না।</p><div class="row"><button class="p" onclick="backup()">⬇ Backup CSV</button><button onclick="document.getElementById(\'rf\').click()">⬆ Restore CSV</button></div><input id="rf" type="file" accept=".csv" style="display:none" onchange="restore(this)"></div><div class="card"><h3>কম্প্যাটিবল গ্রুপ</h3><p class="mu">যেসব মডেল একই পার্টে মেলে, কমা দিয়ে লিখুন</p><div class="row"><input id="gm" placeholder="Samsung A51, Samsung M31s"><button class="p" onclick="addG()">Save</button></div></div>':"";
+ document.getElementById("acc").innerHTML='<div class="card"><h3>🔒 Security — পাসওয়ার্ড বদলান</h3><div class="row"><input id="np" type="password" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"><button class="p" onclick="chPw()">Change</button></div></div>';if(admin){qrows();optList()}}
 async function chPw(){var p=v("np");if(p.length<6){alert("কমপক্ষে ৬ অক্ষর দিন");return}
  var r=await fetch(U+"/auth/v1/user",{method:"PUT",headers:H(),body:JSON.stringify({password:p})});
  alert(r.ok?"পাসওয়ার্ড বদলে গেছে":"হয়নি, Logout করে আবার Login দিয়ে চেষ্টা করুন");document.getElementById("np").value=""}
 async function upd(ix,f,val,re){var r=rows[ix],o={};o[f]=val;r[f]=val;await api("items?id=eq."+r.id,{method:"PATCH",body:JSON.stringify(o)});if(re)draw()}
 async function del(ix){if(!confirm("মুছে ফেলবেন?"))return;await api("items?id=eq."+rows[ix].id,{method:"DELETE"});run()}
-var QP={Display:["AMOLED","IPS","Original"],Battery:["Original","Copy"]};
-function qlist(){return(QP[v("nc")]||["Original","Copy"]).concat([""])}
+var QP={Display:["AMOLED","IPS","Original"],Battery:["Original","Copy"],"Back Part":["Black","White","Blue"],"Middle Part":["Black","White","Blue"],Button:["Volume","Power"]},opts=[];
+function olist(c){var l=opts.filter(function(o){return o.category==c}).map(function(o){return o.name});return l.length?l:(QP[c]||[])}
+function qlist(){return olist(v("nc")).concat([""])}
 function togAdd(){var b=document.getElementById("addbox");b.style.display=b.style.display=="none"?"block":"none"}
 function catChg(){document.getElementById("nm").placeholder=v("nc")=="Battery"?"Battery model (BN54)":"Model (Samsung A51)";qrows()}
 function qrows(){var h="";qlist().forEach(function(q,i){var t='oninput="document.getElementById(\'c'+i+'\').checked=true"';
@@ -145,6 +146,12 @@ async function restore(el){var file=el.files[0];if(!file)return;var rs=parseCSV(
  if(!ad.length){alert("নতুন কিছু পাওয়া যায়নি, সব আগে থেকেই আছে");return}
  for(var i=0;i<ad.length;i+=500)await api("items",{method:"POST",body:JSON.stringify(ad.slice(i,i+500))});
  alert(ad.length+"টা আইটেম ফিরে এসেছে");run()}
+async function addOpt(){var n=v("no").trim();if(!n)return;
+ await api("options",{method:"POST",body:JSON.stringify({category:v("nc"),name:n})});
+ opts=await api("options?select=*&order=pos")||[];document.getElementById("no").value="";qrows();optList()}
+function optList(){var h="";cats.slice(1).forEach(function(c){h+='<div style="margin-top:8px"><b>'+c+'</b><div class="row">'+opts.filter(function(o){return o.category==c}).map(function(o){return'<button onclick="delOpt(\''+o.id+'\')">'+esc(o.name)+' ✕</button>'}).join("")+'</div></div>'});
+ var e=document.getElementById("optl");if(e)e.innerHTML=h}
+async function delOpt(id){if(!confirm("এই অপশন মুছবেন? আগে যোগ করা দাম মুছবে না।"))return;await api("options?id=eq."+id,{method:"DELETE"});opts=await api("options?select=*&order=pos")||[];optList();qrows()}
 async function addG(){var m=v("gm").split(",").map(function(x){return x.trim()}).filter(Boolean);if(m.length<2)return;
  await api("groups",{method:"POST",body:JSON.stringify({models:m})});groups=await api("groups?select=models")||[];run()}
 async function backup(){var d=await all("items?select=*&order=id");

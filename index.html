@@ -80,7 +80,7 @@ async function people(){ppl=(await api("viewers?select=*&order=created_at.desc")
  document.getElementById("ppl").innerHTML=h+'</div>';pc=n;nav()}
 async function setV(i,s){await api("viewers?email=eq."+encodeURIComponent(ppl[i].email),{method:"PATCH",body:JSON.stringify({status:s})});people()}
 function search(){clearTimeout(timer);timer=setTimeout(run,250)}
-async function run(){
+async function run(){editIx=-1;
  var q=v("q").toLowerCase().replace(/display|back part|middle part|button|battery/g,"").replace(/[(),*"]/g,"").trim();
  var p="items?select=*&order=model,category&limit=60"+(cat=="All"?"":"&category=eq."+encodeURIComponent(cat));
  if(q){var M=[];groups.forEach(function(g){if(g.models.some(function(m){return m.toLowerCase().indexOf(q)>-1}))M=M.concat(g.models)});
@@ -99,12 +99,13 @@ function draw(){
    if(admin){cm.push(p[0]);h+='<input class="cw" placeholder="মেলে এমন মডেল (ঐচ্ছিক), কমা দিয়ে লিখুন" value="'+esc(oth.join(", "))+'" onchange="setCompat(cm['+(cm.length-1)+'],this.value).then(run)">'}}
   h+='<table><tr><th>Type / Color</th>'+(showB?'<th>Buy</th>':'')+'<th>Sale</th><th>Status</th></tr>';
   by[k].forEach(function(ix){var r=rows[ix];
+   if(admin&&ix==editIx){h+='<tr><td colspan="4"><div class="row"><input id="ed_m" placeholder="Model" value="'+esc(r.model)+'"><input id="ed_q" placeholder="Type / Color" value="'+esc(r.quality)+'"></div><div class="row"><input id="ed_b" type="number" placeholder="Buy" value="'+r.buy+'"><input id="ed_s" type="number" placeholder="Sale" value="'+r.sale+'"></div><div class="row"><label style="color:#facc15;flex:1 1 100%"><input type="checkbox" id="ed_r"'+(r.rx?' checked':'')+'> RX Stock</label></div><div class="row"><button class="p" onclick="saveEdit('+ix+')">Save</button><button onclick="editIx=-1;draw()">Cancel</button></div></td></tr>';return}
    h+='<tr><td class="q">'+esc(r.quality||"—")+(r.note?'<div class="mu">'+esc(r.note)+'</div>':'');
    if(admin)h+='<input class="wd" placeholder="⚠ সতর্কতা/রিকোয়ারমেন্ট" value="'+esc(r.warn)+'" onchange="upd('+ix+',\'warn\',this.value)">';
    else if(r.warn)h+='<div class="wr">⚠ '+esc(r.warn)+'</div>';
    h+=r.rx?'<div><span class="rxb">RX Stock</span></div>':'';
    h+='</td>';
-   if(admin)h+='<td><input type="number" value="'+r.buy+'" onchange="upd('+ix+',\'buy\',+this.value)"></td><td><input type="number" value="'+r.sale+'" onchange="upd('+ix+',\'sale\',+this.value)"></td><td><button class="'+(r.available?"av":"na")+'" onclick="upd('+ix+',\'available\','+!r.available+',1)">'+(r.available?"Available":"Not Available")+'</button> <button onclick="del('+ix+')">🗑</button> <label><input type="checkbox" '+(r.rx?'checked':'')+' onchange="upd('+ix+',\'rx\',this.checked,1)"></label></td>';
+   if(admin)h+='<td><input type="number" value="'+r.buy+'" onchange="upd('+ix+',\'buy\',+this.value)"></td><td><input type="number" value="'+r.sale+'" onchange="upd('+ix+',\'sale\',+this.value)"></td><td><button class="'+(r.available?"av":"na")+'" onclick="upd('+ix+',\'available\','+!r.available+',1)">'+(r.available?"Available":"Not Available")+'</button> <button onclick="del('+ix+')">🗑</button> <button onclick="editRow('+ix+')">✏</button></td>';
    else h+=(showB?'<td>৳'+r.buy+'</td>':'')+'<td>৳'+r.sale+'</td><td><span class="'+(r.available?"av":"na")+'">'+(r.available?"Available":"Not Available")+'</span></td>';
    h+='</tr>'});h+='</table></div>'});
  document.getElementById("res").innerHTML=h||'<p class="mu">কিছু পাওয়া যায়নি</p>';
@@ -160,7 +161,11 @@ async function addOpt(){var n=v("no").trim();if(!n)return;
 function optList(){var h="";cats.slice(1).filter(function(c){return c!="Middle Part"}).forEach(function(c){h+='<div style="margin-top:8px"><b>'+c+'</b><div class="row">'+opts.filter(function(o){return o.category==c}).map(function(o){return'<button onclick="delOpt(\''+o.id+'\')">'+esc(o.name)+' ✕</button>'}).join("")+'</div></div>'});
  var e=document.getElementById("optl");if(e)e.innerHTML=h}
 async function delOpt(id){if(!confirm("এই অপশন মুছবেন? আগে যোগ করা দাম মুছবে না।"))return;await api("options?id=eq."+id,{method:"DELETE"});opts=await api("options?select=*&order=pos")||[];optList();qrows()}
-var cm=[];
+var cm=[],editIx=-1;
+function editRow(ix){editIx=ix;draw()}
+async function saveEdit(ix){var r=rows[ix],m=v("ed_m").trim();if(!m){alert("Model লিখুন");return}
+ var o={model:m,quality:v("ed_q").trim(),buy:+v("ed_b")||0,sale:+v("ed_s")||0,rx:document.getElementById("ed_r").checked};
+ await api("items?id=eq."+r.id,{method:"PATCH",body:JSON.stringify(o)});run()}
 
 var ukind="All",urows=[],UK=["Mobile","Laptop"];
 async function loadUsed(){urows=await api("used_items?select=*&order=created_at.desc&limit=500")||[];

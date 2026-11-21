@@ -102,9 +102,9 @@ function draw(){
    h+='<tr><td class="q">'+esc(r.quality||"—")+(r.note?'<div class="mu">'+esc(r.note)+'</div>':'');
    if(admin)h+='<input class="wd" placeholder="⚠ সতর্কতা/রিকোয়ারমেন্ট" value="'+esc(r.warn)+'" onchange="upd('+ix+',\'warn\',this.value)">';
    else if(r.warn)h+='<div class="wr">⚠ '+esc(r.warn)+'</div>';
-   h+=admin?'<div><button class="rxb'+(r.rx?'':' off')+'" onclick="upd('+ix+',\'rx\','+!r.rx+',1)">RX Stock</button></div>':(r.rx?'<div><span class="rxb">RX Stock</span></div>':'');
+   h+=r.rx?'<div><span class="rxb">RX Stock</span></div>':'';
    h+='</td>';
-   if(admin)h+='<td><input type="number" value="'+r.buy+'" onchange="upd('+ix+',\'buy\',+this.value)"></td><td><input type="number" value="'+r.sale+'" onchange="upd('+ix+',\'sale\',+this.value)"></td><td><button class="'+(r.available?"av":"na")+'" onclick="upd('+ix+',\'available\','+!r.available+',1)">'+(r.available?"Available":"Not Available")+'</button> <button onclick="del('+ix+')">🗑</button></td>';
+   if(admin)h+='<td><input type="number" value="'+r.buy+'" onchange="upd('+ix+',\'buy\',+this.value)"></td><td><input type="number" value="'+r.sale+'" onchange="upd('+ix+',\'sale\',+this.value)"></td><td><button class="'+(r.available?"av":"na")+'" onclick="upd('+ix+',\'available\','+!r.available+',1)">'+(r.available?"Available":"Not Available")+'</button> <button onclick="del('+ix+')">🗑</button> <label><input type="checkbox" '+(r.rx?'checked':'')+' onchange="upd('+ix+',\'rx\',this.checked,1)"></label></td>';
    else h+=(showB?'<td>৳'+r.buy+'</td>':'')+'<td>৳'+r.sale+'</td><td><span class="'+(r.available?"av":"na")+'">'+(r.available?"Available":"Not Available")+'</span></td>';
    h+='</tr>'});h+='</table></div>'});
  document.getElementById("res").innerHTML=h||'<p class="mu">কিছু পাওয়া যায়নি</p>';

@@ -31,6 +31,7 @@ td input{width:70px;padding:5px}.cw{width:100%;margin:4px 0;font-size:12px}td in
 <div id="v_store"><div style="display:flex;gap:8px;margin:12px 0 8px"><input id="q" placeholder="Search: Samsung A51, BN54 ..." oninput="search()"><button id="plus" class="p" style="display:none;font-size:22px;line-height:1;padding:6px 15px" onclick="togAdd()">＋</button></div><div id="addbox" style="display:none"></div><div class="chips" id="cats"></div><div id="res"></div></div>
 <div id="v_approval" style="display:none"><div id="ppl"></div></div>
 <div id="v_admin" style="display:none"><div id="adm"></div></div>
+<div id="v_used" style="display:none"><div id="uadd"></div><div style="margin:12px 0 8px"><input id="uq" placeholder="Search: iPhone 11, HP ..." oninput="drawUsed()" style="width:100%;font-size:16px"></div><div class="chips" id="uch"></div><div id="ul"></div></div>
 <div id="v_sec" style="display:none"><div id="acc"></div></div>
 </div></div>
 <script>
@@ -135,9 +136,9 @@ async function add(){var m=v("nm").trim();if(!m){alert("Model লিখুন");
  if(v("nc")=="Display"&&v("ac").trim()){var ex=groups.filter(function(g){return g.models.indexOf(m)>-1})[0],cur=ex?ex.models.filter(function(x){return x!=m}):[];await setCompat(m,cur.concat(v("ac").split(",")).join(","))}
  document.getElementById("q").value=m;document.getElementById("nm").value="";qrows();run()}
 var view="store",pc=0;
-function nav(){var l=[["store","🏠 Store"]];if(admin){l.push(["approval","👥 Approval"+(pc?" ("+pc+")":"")]);l.push(["admin","⚙ Admin"])}l.push(["sec","🔒 Security"]);
+function nav(){var l=[["store","🏠 Store"],["used","📱 Second Hand"]];if(admin){l.push(["approval","👥 Approval"+(pc?" ("+pc+")":"")]);l.push(["admin","⚙ Admin"])}l.push(["sec","🔒 Security"]);
  document.getElementById("nav").innerHTML=l.map(function(x){return'<button class="'+(x[0]==view?"on":"")+'" onclick="setView(\''+x[0]+'\')">'+x[1]+'</button>'}).join("")}
-function setView(x){view=x;["store","approval","admin","sec"].forEach(function(k){document.getElementById("v_"+k).style.display=k==x?"block":"none"});nav()}
+function setView(x){view=x;["store","approval","admin","used","sec"].forEach(function(k){document.getElementById("v_"+k).style.display=k==x?"block":"none"});nav();if(x=="used")loadUsed()}
 async function all(p){var out=[],n=0,b;do{b=await api(p+"&limit=1000&offset="+n)||[];out=out.concat(b);n+=1000}while(b.length==1000);return out}
 function parseCSV(t){var r=[],row=[],f="",q=false;t=t.replace(/^\ufeff/,"");
  for(var i=0;i<t.length;i++){var c=t[i];
@@ -160,6 +161,22 @@ function optList(){var h="";cats.slice(1).filter(function(c){return c!="Middle P
  var e=document.getElementById("optl");if(e)e.innerHTML=h}
 async function delOpt(id){if(!confirm("এই অপশন মুছবেন? আগে যোগ করা দাম মুছবে না।"))return;await api("options?id=eq."+id,{method:"DELETE"});opts=await api("options?select=*&order=pos")||[];optList();qrows()}
 var cm=[];
+
+var ukind="All",urows=[],UK=["Mobile","Laptop"];
+async function loadUsed(){urows=await api("used_items?select=*&order=created_at.desc&limit=500")||[];
+ document.getElementById("uadd").innerHTML=admin?'<div class="card"><h3>নতুন সেকেন্ড হ্যান্ড যোগ করুন</h3><div class="row"><select id="uk"><option>Mobile</option><option>Laptop</option></select><input id="um" placeholder="Model (iPhone 11, HP 840 G3)"></div><div class="row"><input id="us" type="number" placeholder="Sale Price"><button class="p" onclick="addUsed()">Add</button></div></div>':"";
+ drawUsed()}
+function drawUsed(){var q=v("uq").toLowerCase().trim(),h="";
+ document.getElementById("uch").innerHTML=["All"].concat(UK).map(function(c){return'<button class="'+(c==ukind?"on":"")+'" onclick="ukind=\''+c+'\';drawUsed()">'+c+'</button>'}).join("");
+ UK.forEach(function(k){if(ukind!="All"&&ukind!=k)return;var t="";
+  urows.forEach(function(r,ix){if(r.kind!=k||(q&&r.model.toLowerCase().indexOf(q)<0))return;
+   t+='<tr><td class="q">'+esc(r.model)+'</td>'+(admin?'<td><input type="number" value="'+r.sale+'" onchange="updUsed('+ix+',+this.value)"> <button onclick="delUsed('+ix+')">🗑</button></td>':'<td>৳'+r.sale+'</td>')+'</tr>'});
+  if(t)h+='<div class="card"><h3>Second Hand '+k+'</h3><table><tr><th>Model</th><th>Sale Price</th></tr>'+t+'</table></div>'});
+ document.getElementById("ul").innerHTML=h||'<p class="mu">কিছু পাওয়া যায়নি</p>'}
+async function addUsed(){var m=v("um").trim();if(!m){alert("Model লিখুন");return}
+ await api("used_items",{method:"POST",body:JSON.stringify({kind:v("uk"),model:m,sale:+v("us")||0})});loadUsed()}
+async function updUsed(ix,val){urows[ix].sale=val;await api("used_items?id=eq."+urows[ix].id,{method:"PATCH",body:JSON.stringify({sale:val})})}
+async function delUsed(ix){if(!confirm("মুছে ফেলবেন?"))return;await api("used_items?id=eq."+urows[ix].id,{method:"DELETE"});loadUsed()}
 async function setCompat(m,txt){var o=txt.split(",").map(function(x){return x.trim()}).filter(function(x){return x&&x!=m});
  var old=groups.filter(function(g){return g.models.indexOf(m)>-1});
  for(var i=0;i<old.length;i++)await api("groups?id=eq."+old[i].id,{method:"DELETE"});

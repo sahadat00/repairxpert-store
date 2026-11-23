@@ -141,16 +141,17 @@ async function updP(ix,k,val){var r=rows[ix],o=pf(k,val,r);Object.assign(r,o);aw
 async function upd(ix,f,val,re){var r=rows[ix],o={};o[f]=val;r[f]=val;await api("items?id=eq."+r.id,{method:"PATCH",body:JSON.stringify(o)});if(re)draw()}
 async function del(ix){if(!confirm("মুছে ফেলবেন?"))return;await api("items?id=eq."+rows[ix].id,{method:"DELETE"});run()}
 var QP={Display:["AMOLED","IPS","Original"],Battery:["Original","Copy"],"Back Part":["Black","White","Blue"],"Middle Part":["Black","White","Blue"],Button:["Volume","Power"]},opts=[];
-function olist(c){var l=opts.filter(function(o){return o.category==c}).map(function(o){return o.name});l=(opts.length?l:(QP[c]||[])).slice();if(c=="Display"&&l.indexOf("Display with Frame")<0){var i=l.indexOf("Original");l.splice(i<0?l.length:i+1,0,"Display with Frame")}return l}
+function olist(c){var l=opts.filter(function(o){return o.category==c}).map(function(o){return o.name});l=(opts.length?l:(QP[c]||[])).slice();return l.filter(function(x){return x!="Display with Frame"})}
 var SINGLE={"Middle Part":1};
 function qlist(){return SINGLE[v("nc")]?["_"]:olist(v("nc")).concat([""])}
 function togAdd(){var b=document.getElementById("addbox");b.style.display=b.style.display=="none"?"block":"none"}
 function catChg(){document.getElementById("nm").placeholder=v("nc")=="Battery"?"Battery model (BN54)":"Model (Samsung A51)";qrows()}
 function qrows(){var h="";qlist().forEach(function(q,i){var t='oninput="document.getElementById(\'c'+i+'\').checked=true"';
- h+='<div class="qr"><label><input type="checkbox" id="c'+i+'"'+(q=="_"?" checked":"")+'> '+(q=="_"?"Middle Part":q?esc(q):'<input id="x'+i+'" placeholder="অন্য কোয়ালিটি (ঐচ্ছিক)">')+'</label><input id="b'+i+'" placeholder="Buy (1300 বা 1300-1500)" '+t+'><input id="s'+i+'" placeholder="Sale (1300 বা 1300-1500)" '+t+'><input id="w'+i+'" placeholder="⚠ সতর্কতা (ঐচ্ছিক)" style="grid-column:1/3"><label style="font-weight:500;color:#facc15"><input type="checkbox" id="r'+i+'"> RX Stock (আমাদের দোকানে আছে)</label></div>'});
+ h+='<div class="qr"><label><input type="checkbox" id="c'+i+'"'+(q=="_"?" checked":"")+'> '+(q=="_"?"Middle Part":q?esc(q):'<input id="x'+i+'" placeholder="অন্য কোয়ালিটি (ঐচ্ছিক)">')+'</label><input id="b'+i+'" placeholder="Buy (1300 বা 1300-1500)" '+t+'><input id="s'+i+'" placeholder="Sale (1300 বা 1300-1500)" '+t+'><input id="w'+i+'" placeholder="⚠ সতর্কতা (ঐচ্ছিক)" style="grid-column:1/3"><label style="font-weight:500;color:#facc15"><input type="checkbox" id="r'+i+'"> RX Stock (আমাদের দোকানে আছে)</label>'+(v("nc")=="Display"&&/amoled|ips/i.test(q)?'<label style="font-weight:500;color:#60a5fa"><input type="checkbox" id="f'+i+'" onchange="if(this.checked)document.getElementById(\'c'+i+'\').checked=true"> With Frame (ফ্রেমসহ)</label>':'')+'</div>'});
  document.getElementById("qs").innerHTML=h;document.getElementById("orow").style.display=SINGLE[v("nc")]?"none":"flex";document.getElementById("cwrap").style.display=v("nc")=="Display"?"block":"none"}
 async function add(){var m=v("nm").trim();if(!m){alert("Model লিখুন");return}
  var o=[];qlist().forEach(function(q,i){if(!document.getElementById("c"+i).checked)return;var n=q=="_"?"":(q||v("x"+i).trim());if(!n&&q!="_")return;
+  var fe=document.getElementById("f"+i);if(fe&&fe.checked)n+=" With Frame";
   var rxv=document.getElementById("r"+i).checked;o.push(Object.assign({model:m,category:v("nc"),quality:n,warn:v("w"+i).trim(),note:v("nn").trim(),available:true},pf("buy",v("b"+i)),pf("sale",v("s"+i)),rxv?{rx:true}:{}))});
  if(!o.length){alert("কমপক্ষে একটা কোয়ালিটির দাম দিন");return}
  var cat=v("nc"),f=await findM(m,cat),tgt=null;

@@ -34,7 +34,7 @@ td input{width:70px;padding:5px}.cw{width:100%;margin:4px 0;font-size:12px}td in
 .qr{border-top:1px solid var(--bd);padding:8px 0;display:grid;grid-template-columns:1fr 1fr;gap:6px}.qr label{grid-column:1/3;font-weight:600}.qr input:not([type=checkbox]){width:100%}.qr input:last-child{grid-column:1/3}.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.row>*{flex:1 1 90px}
 .rxb{display:inline-block;margin-top:4px;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;color:#facc15;background:#facc1522;border:1px solid #facc15}.rxb.off{color:var(--mu);background:none;border-color:var(--bd)}
 </style></head><body><div class="w">
-<header><div class="brand"><img src="logo.png" alt="" onerror="this.style.display='none'"><h1>Repair <span>Xpert</span></h1><span style="font-size:11px;color:#facc15;border:1px solid #facc15;border-radius:99px;padding:1px 7px">v15</span></div><span id="auth"></span></header>
+<header><div class="brand"><img src="logo.png" alt="" onerror="this.style.display='none'"><h1>Repair <span>Xpert</span></h1><span style="font-size:11px;color:#facc15;border:1px solid #facc15;border-radius:99px;padding:1px 7px">v17</span></div><span id="auth"></span></header>
 <div id="lg"></div>
 <div id="app" style="display:none">
 <div class="chips" id="nav" style="margin-top:10px"></div>
@@ -117,7 +117,7 @@ function draw(){
    if(admin){cm.push(p[0]);h+='<input class="cw" placeholder="মেলে এমন মডেল (ঐচ্ছিক), কমা দিয়ে লিখুন" value="'+esc(oth.join(", "))+'" onchange="setCompat(cm['+(cm.length-1)+'],this.value).then(run)">'}}
   h+='<table><tr><th>Type / Color</th>'+(showB?'<th>Buy</th>':'')+'<th>Sale</th><th>Status</th></tr>';
   by[k].forEach(function(ix){var r=rows[ix];
-   if(admin&&ix==editIx){var hf=/\s*with frame$/i.test(r.quality||""),bq=(r.quality||"").replace(/\s*with frame$/i,""),eg=groups.filter(function(g){return g.models.indexOf(r.model)>-1})[0],eo=eg?eg.models.filter(function(x){return x!=r.model}):[];h+='<tr><td colspan="4"><div class="row"><select id="ed_c">'+cats.slice(1).map(function(c){return'<option'+(c==r.category?' selected':'')+'>'+c+'</option>'}).join("")+'</select><input id="ed_m" placeholder="Model" value="'+esc(r.model)+'"></div><div class="row"><input id="ed_q" placeholder="Type / Color (AMOLED, IPS, Black...)" value="'+esc(bq)+'" style="flex:1 1 100%"></div><div class="row"><label style="color:#60a5fa;flex:1 1 100%"><input type="checkbox" id="ed_f"'+(hf?' checked':'')+'> With Frame (ফ্রেমসহ)</label></div><div class="row"><input id="ed_cw" placeholder="মেলে এমন ডিসপ্লের মডেল (শুধু Display), কমা দিয়ে লিখুন" value="'+esc(eo.join(", "))+'" style="flex:1 1 100%"></div><div class="row"><input id="ed_b" placeholder="Buy (1300 বা 1300-1500)" value="'+esc(pd(r,"buy"))+'"><input id="ed_s" placeholder="Sale (1300 বা 1300-1500)" value="'+esc(pd(r,"sale"))+'"></div><div class="row"><input id="ed_w" placeholder="⚠ সতর্কতা (ঐচ্ছিক)" value="'+esc(r.warn)+'" style="flex:1 1 100%"></div><div class="row"><input id="ed_n" placeholder="Note (ঐচ্ছিক)" value="'+esc(r.note)+'" style="flex:1 1 100%"></div><div class="row"><label style="color:#facc15;flex:1 1 45%"><input type="checkbox" id="ed_r"'+(r.rx?' checked':'')+'> RX Stock</label><label style="color:#22c55e;flex:1 1 45%"><input type="checkbox" id="ed_a"'+(r.available?' checked':'')+'> Available</label></div><div class="row"><button class="p" onclick="saveEdit('+ix+')">Save</button><button onclick="editIx=-1;draw()">Cancel</button></div></td></tr>';return}
+   if(admin&&ix==editIx){var hf=/\s*with frame$/i.test(r.quality||""),bq=(r.quality||"").replace(/\s*with frame$/i,""),eg=groups.filter(function(g){return g.models.indexOf(r.model)>-1})[0],eo=eg?eg.models.filter(function(x){return x!=r.model}):[];h+='<tr><td colspan="4"><div class="row"><select id="ed_c">'+cats.slice(1).map(function(c){return'<option'+(c==r.category?' selected':'')+'>'+c+'</option>'}).join("")+'</select><input id="ed_m" placeholder="Model" value="'+esc(r.model)+'"></div><div class="row"><input id="ed_q" placeholder="Type / Color (AMOLED, IPS, Black...)" value="'+esc(bq)+'" style="flex:1 1 100%"></div><div class="row"><label style="color:#60a5fa;flex:1 1 100%"><input type="checkbox" id="ed_f"'+(hf?' checked':'')+'> With Frame (ফ্রেমসহ)</label></div><div class="row"><input id="ed_cw" placeholder="মেলে এমন ডিসপ্লের মডেল (শুধু Display), কমা দিয়ে লিখুন" value="'+esc(eo.join(", "))+'" style="flex:1 1 100%"></div><div class="row"><input id="ed_b" placeholder="Buy (1300 বা 1300-1500)" value="'+esc(pd(r,"buy"))+'"><input id="ed_s" placeholder="Sale (1300 বা 1300-1500)" value="'+esc(pd(r,"sale"))+'"></div><div class="row"><input id="ed_w" placeholder="⚠ সতর্কতা (ঐচ্ছিক)" value="'+esc(r.warn)+'" style="flex:1 1 100%"></div><div class="row"><input id="ed_n" placeholder="Note (ঐচ্ছিক)" value="'+esc(r.note)+'" style="flex:1 1 100%"></div><div class="row"><label style="color:#facc15;flex:1 1 45%"><input type="checkbox" id="ed_r"'+(r.rx?' checked':'')+'> RX Stock</label><label style="color:#22c55e;flex:1 1 45%"><input type="checkbox" id="ed_a"'+(r.available?' checked':'')+'> Available</label></div>'+eaHtml(r)+'<div class="row"><button class="p" onclick="saveEdit('+ix+')">Save</button><button onclick="editIx=-1;draw()">Cancel</button></div></td></tr>';return}
    h+='<tr><td class="q">'+esc(r.quality||"—")+(r.note?'<div class="mu">'+esc(r.note)+'</div>':'');
    if(admin)h+='<input class="wd" placeholder="⚠ সতর্কতা/রিকোয়ারমেন্ট" value="'+esc(r.warn)+'" onchange="upd('+ix+',\'warn\',this.value)">';
    else if(r.warn)h+='<div class="wr">⚠ '+esc(r.warn)+'</div>';
@@ -125,12 +125,12 @@ function draw(){
    h+='</td>';
    if(admin)h+='<td><input value="'+esc(pd(r,"buy"))+'" onchange="updP('+ix+',\'buy\',this.value)"></td><td><input value="'+esc(pd(r,"sale"))+'" onchange="updP('+ix+',\'sale\',this.value)"></td><td><button class="'+(r.available?"av":"na")+'" onclick="upd('+ix+',\'available\','+!r.available+',1)">'+(r.available?"Available":"Not Available")+'</button> <button onclick="del('+ix+')">🗑</button> <button onclick="editRow('+ix+')">✏</button></td>';
    else h+=(showB?'<td>৳'+esc(pd(r,'buy'))+'</td>':'')+'<td>৳'+esc(pd(r,'sale'))+'</td><td><span class="'+(r.available?"av":"na")+'">'+(r.available?"Available":"Not Available")+'</span></td>';
-   h+='</tr>'});h+='</table>';if(admin){cks.push(p);h+=aqHtml(cks.length-1,p)}h+='</div>'});
+   h+='</tr>'});h+='</table></div>'});
  document.getElementById("res").innerHTML=h||'<p class="mu">কিছু পাওয়া যায়নি</p>';
  document.getElementById("cats").innerHTML=cats.map(function(c){return'<button class="'+(c==cat?"on":"")+'" onclick="sel(\''+c+'\')">'+c+'</button>'}).join("");
  document.getElementById("auth").innerHTML='<span class="mu">'+(admin?"Admin":"Viewer")+'</span> <button onclick="logout()">Logout</button>'}
 function forms(){
- document.getElementById("addbox").innerHTML=admin?'<div class="card"><h3>নতুন প্রাইস যোগ করুন</h3><div class="row"><select id="nc" onchange="catChg();mhint()"><option>Display</option><option>Back Part</option><option>Middle Part</option><option>Button</option><option>Battery</option></select><input id="nm" placeholder="Model (Samsung A51)" oninput="mhint()"></div><div id="mh" style="color:#facc15;font-size:13px;margin:4px 0"></div><input id="nn" placeholder="Note (ঐচ্ছিক)" style="width:100%;margin-top:6px"><p class="mu">যে কোয়ালিটি আছে শুধু তার Buy/Sale লিখুন, টিক নিজে পড়ে যাবে।</p><div id="qs"></div><div class="row" id="orow"><input id="no" placeholder="নতুন কালার/কোয়ালিটি লিখুন"><button onclick="addOpt()">＋ অপশন যোগ</button></div><div id="cwrap"><input id="ac" placeholder="যে মডেলের ডিসপ্লের সাথে মেলে (ঐচ্ছিক), কমা দিয়ে লিখুন" style="width:100%;margin-top:6px"></div><div class="row"><button class="p" onclick="add()">Add</button><button onclick="togAdd()">Close</button></div></div>':"";document.getElementById("plus").style.display=admin?"block":"none";
+ document.getElementById("addbox").innerHTML=admin?'<div class="card"><h3>নতুন প্রাইস যোগ করুন</h3><div class="row"><select id="nc" onchange="catChg();mhint()"><option>Display</option><option>Back Part</option><option>Middle Part</option><option>Button</option><option>Battery</option></select><input id="nm" placeholder="Model (Samsung A51)" oninput="aqFrom=0;mhint()"></div><div id="mh" style="color:#facc15;font-size:13px;margin:4px 0"></div><input id="nn" placeholder="Note (ঐচ্ছিক)" style="width:100%;margin-top:6px"><p class="mu">যে কোয়ালিটি আছে শুধু তার Buy/Sale লিখুন, টিক নিজে পড়ে যাবে।</p><div id="qs"></div><div class="row" id="orow"><input id="no" placeholder="নতুন কালার/কোয়ালিটি লিখুন"><button onclick="addOpt()">＋ অপশন যোগ</button></div><div id="cwrap"><input id="ac" placeholder="যে মডেলের ডিসপ্লের সাথে মেলে (ঐচ্ছিক), কমা দিয়ে লিখুন" style="width:100%;margin-top:6px"></div><div class="row"><button class="p" onclick="add()">Add</button><button onclick="togAdd()">Close</button></div></div>':"";document.getElementById("plus").style.display=admin?"block":"none";
  document.getElementById("adm").innerHTML=admin?'<div class="card"><h3>অপশন তালিকা (কালার / কোয়ালিটি)</h3><p class="mu">মুছতে ✕ চাপুন। নতুন যোগ করতে Store-এর ＋ ফর্মে "অপশন যোগ" ব্যবহার করুন।</p><div id="optl"></div></div><div class="card"><h3>Backup / Restore</h3><p class="mu">Backup: সব ডেটা CSV ফাইল হয়ে নামবে। Restore: আগের Backup ফাইল আপলোড করলে যেগুলো নেই সেগুলো ফিরে আসবে, যেগুলো আছে দ্বিগুণ হবে না।</p><div class="row"><button class="p" onclick="backup()">⬇ Backup CSV</button><button onclick="document.getElementById(\'rf\').click()">⬆ Restore CSV</button></div><input id="rf" type="file" accept=".csv" style="display:none" onchange="restore(this)"></div>':"";
  document.getElementById("acc").innerHTML='<div class="card"><h3>🔒 Security — পাসওয়ার্ড বদলান</h3><div class="row"><input id="op" type="password" placeholder="পুরনো পাসওয়ার্ড"></div><div class="row"><input id="np" type="password" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"><button class="p" onclick="chPw()">Change</button></div></div>';if(admin){qrows();optList()}}
 async function chPw(){var o=v("op"),p=v("np");if(!o){alert("পুরনো পাসওয়ার্ড দিন");return}if(p.length<6){alert("নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষর দিন");return}
@@ -160,12 +160,12 @@ async function add(){var m=v("nm").trim();if(!m){alert("Model লিখুন");
  if(tgt){var have=f.L.filter(function(x){return x.model==tgt}).map(function(x){return x.quality}),dup=o.filter(function(r){return have.some(function(h){return nk(h)==nk(r.quality)})});
   if(f.ex||dup.length){var msg='⚠ "'+tgt+'" ('+cat+') আগে থেকেই যোগ করা আছে।\nআছে: '+have.map(function(q){return q||"(single)"}).join(", ");
    if(dup.length)msg+='\n\nএই কোয়ালিটি আগে থেকেই আছে, তাই বাদ যাবে: '+dup.map(function(r){return r.quality||"(single)"}).join(", ")+'\n(দাম বদলাতে ✏ Edit ব্যবহার করুন)';
-   msg+='\n\nOK = "'+tgt+'"-এর সাথে বাকিগুলো যোগ করুন\nCancel = বাতিল';if(!confirm(msg))return}
+   msg+='\n\nOK = "'+tgt+'"-এর সাথে বাকিগুলো যোগ করুন\nCancel = বাতিল';if(!(aqFrom&&f.ex&&!dup.length)&&!confirm(msg))return}
   o=o.filter(function(r){return dup.indexOf(r)<0});if(!o.length){alert("সবগুলো কোয়ালিটি আগে থেকেই আছে, নতুন কিছু যোগ হয়নি");return}
   o.forEach(function(r){r.model=tgt});m=tgt}
  await api("items",{method:"POST",body:JSON.stringify(o)});
  if(v("nc")=="Display"&&v("ac").trim()){var ex=groups.filter(function(g){return g.models.indexOf(m)>-1})[0],cur=ex?ex.models.filter(function(x){return x!=m}):[];await setCompat(m,cur.concat(v("ac").split(",")).join(","))}
- document.getElementById("q").value=m;document.getElementById("nm").value="";qrows();run()}
+ document.getElementById("q").value=m;document.getElementById("nm").value="";qrows();if(aqFrom){aqFrom=0;document.getElementById("addbox").style.display="none"}run()}
 var view="store",pc=0;
 function nav(){var l=[["store","🏠 Store"],["used","📱 Second Hand"]];if(admin){l.push(["approval","👥 Approval"+(pc?" ("+pc+")":"")]);l.push(["admin","⚙ Admin"])}l.push(["sec","🔒 Security"]);
  document.getElementById("nav").innerHTML=l.map(function(x){return'<button class="'+(x[0]==view?"on":"")+'" onclick="setView(\''+x[0]+'\')">'+x[1]+'</button>'}).join("")}
@@ -191,7 +191,7 @@ async function addOpt(){var n=v("no").trim();if(!n)return;
 function optList(){var h="";cats.slice(1).filter(function(c){return c!="Middle Part"}).forEach(function(c){h+='<div style="margin-top:8px"><b>'+c+'</b><div class="row">'+opts.filter(function(o){return o.category==c}).map(function(o){return'<button onclick="delOpt(\''+o.id+'\')">'+esc(o.name)+' ✕</button>'}).join("")+'</div></div>'});
  var e=document.getElementById("optl");if(e)e.innerHTML=h}
 async function delOpt(id){if(!confirm("এই অপশন মুছবেন? আগে যোগ করা দাম মুছবে না।"))return;await api("options?id=eq."+id,{method:"DELETE"});opts=await api("options?select=*&order=pos")||[];optList();qrows()}
-var cm=[],editIx=-1,aqIx=-1,cks=[];
+var cm=[],editIx=-1,aqIx=-1,cks=[],aqFrom=0;
 function pp(x){x=String(x==null?"":x).replace(/,/g,"").trim();if(/^\d+(\.\d+)?$/.test(x))return{n:+x,t:null};var m=x.match(/\d+/);return{n:m?+m[0]:0,t:x||null}}
 function pv(r,k){var t=r[k+"_txt"];return t?t:r[k]}
 function gp(n){if(n.length<=3)return n;return n.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,",")+","+n.slice(-3)}
@@ -208,19 +208,9 @@ async function findM(m,c){var L=await getModels(c),k=nk(m),names={},ex=null,near
  return{ex:ex,near:near,L:L}}
 async function mhint(){var el=document.getElementById("mh");if(!el)return;var m=v("nm").trim();if(!m){el.textContent="";return}
  var c=v("nc"),f=await findM(m,c);el.textContent=f.ex?'⚠ "'+f.ex+'" ('+c+') আগে থেকেই আছে':(f.near?'❓ মিল আছে: "'+f.near+'" — এটাই কি?':"")}
-function aqHtml(i,p){if(aqIx!=i)return'<button style="margin-top:8px;width:100%" onclick="aqIx='+i+';draw()">＋ কোয়ালিটি যোগ করুন (AMOLED / Original ...)</button>';
- var c=p[1],h='<div style="border-top:1px solid var(--bd);margin-top:8px;padding-top:8px"><b>নতুন কোয়ালিটি — '+esc(p[0])+'</b>';
- if(!SINGLE[c])h+='<div class="row">'+olist(c).map(function(q){return'<label style="flex:1 1 40%;font-weight:600"><input type="radio" name="aq_q" value="'+esc(q)+'"> '+esc(q)+'</label>'}).join("")+'</div><div class="row"><input id="aq_x" placeholder="অন্য কোয়ালিটি (ঐচ্ছিক)" style="flex:1 1 100%"></div>';
- if(c=="Display")h+='<div class="row"><label style="color:#60a5fa;flex:1 1 100%"><input type="checkbox" id="aq_f"> With Frame (ফ্রেমসহ)</label></div>';
- h+='<div class="row"><input id="aq_b" placeholder="Buy (1300 বা 1300-1500)"><input id="aq_s" placeholder="Sale (1300 বা 1300-1500)"></div><div class="row"><input id="aq_w" placeholder="⚠ সতর্কতা (ঐচ্ছিক)" style="flex:1 1 100%"></div><div class="row"><label style="color:#facc15;flex:1 1 100%"><input type="checkbox" id="aq_r"> RX Stock</label></div><div class="row"><button class="p" onclick="saveAq('+i+')">Add</button><button onclick="aqIx=-1;draw()">Cancel</button></div></div>';return h}
-async function saveAq(i){var p=cks[i],c=p[1],q="";
- if(!SINGLE[c]){var rd=document.querySelector("input[name=aq_q]:checked");q=v("aq_x").trim()||(rd?rd.value:"");if(!q){alert("কোয়ালিটি টিক দিন বা লিখুন");return}}
- var fe=document.getElementById("aq_f");if(fe&&fe.checked)q=(q+" With Frame").trim();
- if(!v("aq_b").trim()&&!v("aq_s").trim()){alert("Buy বা Sale দাম লিখুন");return}
- if(rows.some(function(r){return r.model==p[0]&&r.category==c&&nk(r.quality||"")==nk(q)})){alert("এই কোয়ালিটি আগে থেকেই আছে। দাম বদলাতে ✏ Edit ব্যবহার করুন");return}
- var o=Object.assign({model:p[0],category:c,quality:q,warn:v("aq_w").trim(),note:"",available:true},pf("buy",v("aq_b")),pf("sale",v("aq_s")));
- if(document.getElementById("aq_r").checked)o.rx=true;
- await api("items",{method:"POST",body:JSON.stringify(o)});run()}
+function eaHtml(r){var ql=SINGLE[r.category]?[]:olist(r.category).concat([""]);var h='<div style="border-top:1px solid var(--bd);margin-top:8px;padding-top:8px"><b>＋ নতুন কোয়ালিটি যোগ করুন</b><p class="mu">যেটা যোগ করবেন তার টিক দিন ও দাম লিখুন। আগে থেকে থাকা কোয়ালিটি বাদ যাবে।</p>';
+ ql.forEach(function(q,i){var t='oninput="document.getElementById(\'ec'+i+'\').checked=true"';
+  h+='<div class="qr"><label><input type="checkbox" id="ec'+i+'"> '+(q?esc(q):'<input id="ex'+i+'" placeholder="অন্য কোয়ালিটি (ঐচ্ছিক)">')+'</label><input id="eb'+i+'" placeholder="Buy (1300 বা 1300-1500)" '+t+'><input id="es'+i+'" placeholder="Sale (1300 বা 1300-1500)" '+t+'><input id="ew'+i+'" placeholder="⚠ সতর্কতা (ঐচ্ছিক)" style="grid-column:1/3">'+(r.category=="Display"&&/amoled|ips/i.test(q)?'<label style="font-weight:500;color:#60a5fa"><input type="checkbox" id="ef'+i+'"> With Frame (ফ্রেমসহ)</label>':'')+'<label style="font-weight:500;color:#facc15"><input type="checkbox" id="er'+i+'"> RX Stock</label></div>'});return h+'</div>'}
 function editRow(ix){editIx=ix;draw()}
 async function saveEdit(ix){var r=rows[ix],m=v("ed_m").trim();if(!m){alert("Model লিখুন");return}
  var q=v("ed_q").trim();if(document.getElementById("ed_f").checked)q=(q+" With Frame").trim();
@@ -230,6 +220,14 @@ async function saveEdit(ix){var r=rows[ix],m=v("ed_m").trim();if(!m){alert("Mode
  if(v("ed_c")=="Display"){var og=groups.filter(function(g){return g.models.indexOf(r.model)>-1});
   if(m!=r.model){for(var i=0;i<og.length;i++)await api("groups?id=eq."+og[i].id,{method:"PATCH",body:JSON.stringify({models:og[i].models.map(function(x){return x==r.model?m:x})})});groups=await api("groups?select=id,models")||[]}
   await setCompat(m,v("ed_cw"))}
+ var cc=v("ed_c"),ql=SINGLE[r.category]?[]:olist(r.category).concat([""]),nw=[],sk=[];
+ var have=(await api("items?select=id,quality&model=eq."+encodeURIComponent(m)+"&category=eq."+encodeURIComponent(cc))||[]).map(function(x){return x.quality||""});
+ ql.forEach(function(q,i){var ce=document.getElementById("ec"+i);if(!ce||!ce.checked)return;var n=q||v("ex"+i).trim();if(!n)return;var fe=document.getElementById("ef"+i);if(fe&&fe.checked)n+=" With Frame";
+  if(!v("eb"+i).trim()&&!v("es"+i).trim())return;
+  if(have.some(function(h){return nk(h)==nk(n)})){sk.push(n);return}have.push(n);
+  var o2=Object.assign({model:m,category:cc,quality:n,warn:v("ew"+i).trim(),note:"",available:true},pf("buy",v("eb"+i)),pf("sale",v("es"+i)));if(document.getElementById("er"+i).checked)o2.rx=true;nw.push(o2)});
+ if(nw.length)await api("items",{method:"POST",body:JSON.stringify(nw)});
+ if(sk.length)alert("এগুলো আগে থেকেই আছে, তাই যোগ হয়নি: "+sk.join(", "));
  run()}
 
 var ukind="All",urows=[],UK=["Mobile","Laptop"];

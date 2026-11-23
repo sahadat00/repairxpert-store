@@ -1,3 +1,16 @@
+<!-- FINAL-NOTE: নতুন ফিচারের জন্য Supabase SQL Editor-এ একবার নিচের SQL চালাতে হবে (পুরো setup.sql-এর নতুন অংশ):
+alter table items add column if not exists rx boolean default false;
+- - সেকেন্ড হ্যান্ড মোবাইল / ল্যাপটপ (শুধু মডেল + সেল প্রাইস)
+create table if not exists used_items(id uuid primary key default gen_random_uuid(), kind text not null, model text not null, sale int default 0, created_at timestamptz default now());
+alter table used_items enable row level security;
+drop policy if exists "view used" on used_items; drop policy if exists "write used" on used_items;
+create policy "view used" on used_items for select to authenticated using (
+  exists(select 1 from admins a where a.email = lower(auth.jwt()->>'email'))
+  or exists(select 1 from viewers v where v.email = lower(auth.jwt()->>'email') and v.status = 'approved'));
+create policy "write used" on used_items for all to authenticated
+  using (exists(select 1 from admins a where a.email = lower(auth.jwt()->>'email')))
+  with check (exists(select 1 from admins a where a.email = lower(auth.jwt()->>'email')));
+-->
 <!DOCTYPE html>
 <html lang="bn"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -58,7 +71,7 @@ async function auth(kind){var e=v("em").trim(),p=v("pw");if(!e||p.length<6){aler
  tok=d.access_token;rt=d.refresh_token;saveRt();start(true)}
 function logout(){tok=null;rt=null;admin=false;saveRt();gate()}
 function gate(){document.getElementById("app").style.display="none";document.getElementById("auth").innerHTML="";
- document.getElementById("lg").innerHTML='<div class="card"><h3>Login</h3><p class="mu">Email ও পাসওয়ার্ড দিয়ে ঢুকুন। নতুন হলে Sign up চাপুন।</p><div class="row"><input id="em" type="email" placeholder="Gmail"><input id="pw" type="password" placeholder="Password"></div><div class="row"><button class="p" onclick="auth(\'in\')">Login</button><button onclick="auth(\'up\')">Sign up</button></div></div>'}
+ document.getElementById("lg").innerHTML='<div class="card"><h3>Login</h3><p class="mu">Email ও পাসওয়ার্ড দিয়ে ঢুকুন। নতুন হলে Sign up চাপুন।</p><div class="row"><input id="em" type="email" placeholder="Gmail"><input id="pw" type="password" placeholder="Password"></div><div class="row"><button class="p" onclick="auth(\'in\')">Login</button><button onclick="auth(\'up\')">Sign up</button></div><div class="row"><button onclick="forgot()">পাসওয়ার্ড ভুলে গেছেন?</button></div></div>'}
 async function who(){var r=await fetch(U+"/auth/v1/user",{headers:H()});var d=await r.json().catch(function(){return{}});return(d.email||"").toLowerCase()}
 function wait(s){document.getElementById("app").style.display="none";
  document.getElementById("auth").innerHTML='<button onclick="logout()">Logout</button>';
@@ -80,7 +93,7 @@ async function people(){ppl=(await api("viewers?select=*&order=created_at.desc")
  document.getElementById("ppl").innerHTML=h+'</div>';pc=n;nav()}
 async function setV(i,s){await api("viewers?email=eq."+encodeURIComponent(ppl[i].email),{method:"PATCH",body:JSON.stringify({status:s})});people()}
 function search(){clearTimeout(timer);timer=setTimeout(run,250)}
-async function run(){editIx=-1;
+async function run(){editIx=-1;mcache={};
  var q=v("q").toLowerCase().replace(/display|back part|middle part|button|battery/g,"").replace(/[(),*"]/g,"").trim();
  var p="items?select=*&order=model,category&limit=60"+(cat=="All"?"":"&category=eq."+encodeURIComponent(cat));
  if(q){var M=[];groups.forEach(function(g){if(g.models.some(function(m){return m.toLowerCase().indexOf(q)>-1}))M=M.concat(g.models)});
@@ -112,12 +125,27 @@ function draw(){
  document.getElementById("cats").innerHTML=cats.map(function(c){return'<button class="'+(c==cat?"on":"")+'" onclick="sel(\''+c+'\')">'+c+'</button>'}).join("");
  document.getElementById("auth").innerHTML='<span class="mu">'+(admin?"Admin":"Viewer")+'</span> <button onclick="logout()">Logout</button>'}
 function forms(){
- document.getElementById("addbox").innerHTML=admin?'<div class="card"><h3>নতুন প্রাইস যোগ করুন</h3><div class="row"><select id="nc" onchange="catChg()"><option>Display</option><option>Back Part</option><option>Middle Part</option><option>Button</option><option>Battery</option></select><input id="nm" placeholder="Model (Samsung A51)"></div><input id="nn" placeholder="Note (ঐচ্ছিক)" style="width:100%;margin-top:6px"><p class="mu">যে কোয়ালিটি আছে শুধু তার Buy/Sale লিখুন, টিক নিজে পড়ে যাবে।</p><div id="qs"></div><div class="row" id="orow"><input id="no" placeholder="নতুন কালার/কোয়ালিটি লিখুন"><button onclick="addOpt()">＋ অপশন যোগ</button></div><div id="cwrap"><input id="ac" placeholder="যে মডেলের ডিসপ্লের সাথে মেলে (ঐচ্ছিক), কমা দিয়ে লিখুন" style="width:100%;margin-top:6px"></div><div class="row"><button class="p" onclick="add()">Add</button><button onclick="togAdd()">Close</button></div></div>':"";document.getElementById("plus").style.display=admin?"block":"none";
+ document.getElementById("addbox").innerHTML=admin?'<div class="card"><h3>নতুন প্রাইস যোগ করুন</h3><div class="row"><select id="nc" onchange="catChg();mhint()"><option>Display</option><option>Back Part</option><option>Middle Part</option><option>Button</option><option>Battery</option></select><input id="nm" placeholder="Model (Samsung A51)" oninput="mhint()"></div><div id="mh" style="color:#facc15;font-size:13px;margin:4px 0"></div><input id="nn" placeholder="Note (ঐচ্ছিক)" style="width:100%;margin-top:6px"><p class="mu">যে কোয়ালিটি আছে শুধু তার Buy/Sale লিখুন, টিক নিজে পড়ে যাবে।</p><div id="qs"></div><div class="row" id="orow"><input id="no" placeholder="নতুন কালার/কোয়ালিটি লিখুন"><button onclick="addOpt()">＋ অপশন যোগ</button></div><div id="cwrap"><input id="ac" placeholder="যে মডেলের ডিসপ্লের সাথে মেলে (ঐচ্ছিক), কমা দিয়ে লিখুন" style="width:100%;margin-top:6px"></div><div class="row"><button class="p" onclick="add()">Add</button><button onclick="togAdd()">Close</button></div></div>':"";document.getElementById("plus").style.display=admin?"block":"none";
  document.getElementById("adm").innerHTML=admin?'<div class="card"><h3>অপশন তালিকা (কালার / কোয়ালিটি)</h3><p class="mu">মুছতে ✕ চাপুন। নতুন যোগ করতে Store-এর ＋ ফর্মে "অপশন যোগ" ব্যবহার করুন।</p><div id="optl"></div></div><div class="card"><h3>Backup / Restore</h3><p class="mu">Backup: সব ডেটা CSV ফাইল হয়ে নামবে। Restore: আগের Backup ফাইল আপলোড করলে যেগুলো নেই সেগুলো ফিরে আসবে, যেগুলো আছে দ্বিগুণ হবে না।</p><div class="row"><button class="p" onclick="backup()">⬇ Backup CSV</button><button onclick="document.getElementById(\'rf\').click()">⬆ Restore CSV</button></div><input id="rf" type="file" accept=".csv" style="display:none" onchange="restore(this)"></div>':"";
- document.getElementById("acc").innerHTML='<div class="card"><h3>🔒 Security — পাসওয়ার্ড বদলান</h3><div class="row"><input id="np" type="password" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"><button class="p" onclick="chPw()">Change</button></div></div>';if(admin){qrows();optList()}}
-async function chPw(){var p=v("np");if(p.length<6){alert("কমপক্ষে ৬ অক্ষর দিন");return}
+ document.getElementById("acc").innerHTML='<div class="card"><h3>🔒 Security — পাসওয়ার্ড বদলান</h3><div class="row"><input id="op" type="password" placeholder="পুরনো পাসওয়ার্ড"></div><div class="row"><input id="np" type="password" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"><button class="p" onclick="chPw()">Change</button></div></div>';if(admin){qrows();optList()}}
+async function chPw(){var o=v("op"),p=v("np");if(!o){alert("পুরনো পাসওয়ার্ড দিন");return}if(p.length<6){alert("নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষর দিন");return}
+ var e=await who();var c=await fetch(U+"/auth/v1/token?grant_type=password",{method:"POST",headers:{apikey:K,"Content-Type":"application/json"},body:JSON.stringify({email:e,password:o})});
+ if(!c.ok){alert("পুরনো পাসওয়ার্ড ভুল");return}
  var r=await fetch(U+"/auth/v1/user",{method:"PUT",headers:H(),body:JSON.stringify({password:p})});
- alert(r.ok?"পাসওয়ার্ড বদলে গেছে":"হয়নি, Logout করে আবার Login দিয়ে চেষ্টা করুন");document.getElementById("np").value=""}
+ alert(r.ok?"পাসওয়ার্ড বদলে গেছে":"হয়নি, Logout করে আবার Login দিয়ে চেষ্টা করুন");document.getElementById("op").value="";document.getElementById("np").value=""}
+function forgot(){document.getElementById("lg").innerHTML='<div class="card"><h3>পাসওয়ার্ড ভুলে গেছেন?</h3><p class="mu">Gmail দিন, ওই ইমেইলে একটা OTP কোড যাবে।</p><div class="row"><input id="fe" type="email" placeholder="Gmail"><button class="p" onclick="sendOtp()">OTP পাঠান</button></div><div id="fo" style="display:none"><div class="row"><input id="fc" inputmode="numeric" placeholder="OTP কোড"><input id="fp" type="password" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬)"></div><div class="row"><button class="p" onclick="verifyOtp()">Verify করে ঢুকুন</button></div></div><div class="row"><button onclick="gate()">← Login-এ ফিরুন</button></div></div>'}
+async function sendOtp(){var e=v("fe").trim();if(!e){alert("Gmail দিন");return}
+ var r=await fetch(U+"/auth/v1/otp",{method:"POST",headers:{apikey:K,"Content-Type":"application/json"},body:JSON.stringify({email:e,create_user:false})});
+ var d=await r.json().catch(function(){return{}});
+ if(!r.ok){alert(d.msg||d.error_description||"OTP পাঠানো যায়নি, একটু পরে আবার চেষ্টা করুন");return}
+ document.getElementById("fo").style.display="block";alert("OTP পাঠানো হয়েছে। ইমেইল (স্প্যাম ফোল্ডারসহ) দেখুন")}
+async function verifyOtp(){var e=v("fe").trim(),c=v("fc").trim(),p=v("fp");if(!c){alert("OTP কোড দিন");return}if(p.length<6){alert("নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষর দিন");return}
+ var r=await fetch(U+"/auth/v1/verify",{method:"POST",headers:{apikey:K,"Content-Type":"application/json"},body:JSON.stringify({type:"email",email:e,token:c})});
+ var d=await r.json().catch(function(){return{}});
+ if(!r.ok||!d.access_token){alert("OTP ভুল বা মেয়াদ শেষ");return}
+ tok=d.access_token;rt=d.refresh_token;
+ var u=await fetch(U+"/auth/v1/user",{method:"PUT",headers:H(),body:JSON.stringify({password:p})});
+ saveRt();alert(u.ok?"নতুন পাসওয়ার্ড সেট হয়েছে":"ঢোকা হয়েছে, কিন্তু পাসওয়ার্ড বদলায়নি। Security থেকে আবার বদলান");start(true)}
 async function upd(ix,f,val,re){var r=rows[ix],o={};o[f]=val;r[f]=val;await api("items?id=eq."+r.id,{method:"PATCH",body:JSON.stringify(o)});if(re)draw()}
 async function del(ix){if(!confirm("মুছে ফেলবেন?"))return;await api("items?id=eq."+rows[ix].id,{method:"DELETE"});run()}
 var QP={Display:["AMOLED","IPS","Original"],Battery:["Original","Copy"],"Back Part":["Black","White","Blue"],"Middle Part":["Black","White","Blue"],Button:["Volume","Power"]},opts=[];
@@ -133,6 +161,14 @@ async function add(){var m=v("nm").trim();if(!m){alert("Model লিখুন");
  var o=[];qlist().forEach(function(q,i){if(!document.getElementById("c"+i).checked)return;var n=q=="_"?"":(q||v("x"+i).trim());if(!n&&q!="_")return;
   o.push({model:m,category:v("nc"),quality:n,buy:+v("b"+i)||0,sale:+v("s"+i)||0,warn:v("w"+i).trim(),note:v("nn").trim(),available:true,rx:document.getElementById("r"+i).checked})});
  if(!o.length){alert("কমপক্ষে একটা কোয়ালিটির দাম দিন");return}
+ var cat=v("nc"),f=await findM(m,cat),tgt=null;
+ if(f.ex)tgt=f.ex;else if(f.near&&confirm('❓ "'+f.near+'" নামে একটা মডেল আছে। আপনি কি এটাই যোগ করছেন?\n\nOK = হ্যাঁ, "'+f.near+'"-এর সাথে যোগ হবে\nCancel = না, "'+m+'" নতুন মডেল হিসেবে যোগ হবে'))tgt=f.near;
+ if(tgt){var have=f.L.filter(function(x){return x.model==tgt}).map(function(x){return x.quality}),dup=o.filter(function(r){return have.some(function(h){return nk(h)==nk(r.quality)})});
+  if(f.ex||dup.length){var msg='⚠ "'+tgt+'" ('+cat+') আগে থেকেই যোগ করা আছে।\nআছে: '+have.map(function(q){return q||"(single)"}).join(", ");
+   if(dup.length)msg+='\n\nএই কোয়ালিটি আগে থেকেই আছে, তাই বাদ যাবে: '+dup.map(function(r){return r.quality||"(single)"}).join(", ")+'\n(দাম বদলাতে ✏ Edit ব্যবহার করুন)';
+   msg+='\n\nOK = "'+tgt+'"-এর সাথে বাকিগুলো যোগ করুন\nCancel = বাতিল';if(!confirm(msg))return}
+  o=o.filter(function(r){return dup.indexOf(r)<0});if(!o.length){alert("সবগুলো কোয়ালিটি আগে থেকেই আছে, নতুন কিছু যোগ হয়নি");return}
+  o.forEach(function(r){r.model=tgt});m=tgt}
  await api("items",{method:"POST",body:JSON.stringify(o)});
  if(v("nc")=="Display"&&v("ac").trim()){var ex=groups.filter(function(g){return g.models.indexOf(m)>-1})[0],cur=ex?ex.models.filter(function(x){return x!=m}):[];await setCompat(m,cur.concat(v("ac").split(",")).join(","))}
  document.getElementById("q").value=m;document.getElementById("nm").value="";qrows();run()}
@@ -162,6 +198,17 @@ function optList(){var h="";cats.slice(1).filter(function(c){return c!="Middle P
  var e=document.getElementById("optl");if(e)e.innerHTML=h}
 async function delOpt(id){if(!confirm("এই অপশন মুছবেন? আগে যোগ করা দাম মুছবে না।"))return;await api("options?id=eq."+id,{method:"DELETE"});opts=await api("options?select=*&order=pos")||[];optList();qrows()}
 var cm=[],editIx=-1;
+var mcache={};
+function nk(x){return x.toLowerCase().replace(/[^a-z0-9\u0980-\u09ff]/g,"")}
+function ed1(a,b){if(a==b)return true;if(Math.abs(a.length-b.length)>1)return false;var i=0;while(i<a.length&&i<b.length&&a[i]==b[i])i++;
+ if(a.length==b.length)return a.slice(i+1)==b.slice(i+1)||(a[i]==b[i+1]&&a[i+1]==b[i]&&a.slice(i+2)==b.slice(i+2));
+ var l=a.length>b.length?a:b,sh=a.length>b.length?b:a;return l.slice(i+1)==sh.slice(i)}
+async function getModels(c){if(!mcache[c]){var all=[],off=0;while(1){var d=await api("items?select=model,quality&category=eq."+encodeURIComponent(c)+"&order=id&limit=1000&offset="+off)||[];all=all.concat(d);if(d.length<1000)break;off+=1000}mcache[c]=all}return mcache[c]}
+async function findM(m,c){var L=await getModels(c),k=nk(m),names={},ex=null,near=null;L.forEach(function(x){names[x.model]=1});
+ if(k)Object.keys(names).forEach(function(n){var nn=nk(n);if(nn==k)ex=ex||n;else if(k.length>=5&&nn.replace(/\D/g,"")==k.replace(/\D/g,"")&&ed1(nn,k))near=near||n});
+ return{ex:ex,near:near,L:L}}
+async function mhint(){var el=document.getElementById("mh");if(!el)return;var m=v("nm").trim();if(!m){el.textContent="";return}
+ var c=v("nc"),f=await findM(m,c);el.textContent=f.ex?'⚠ "'+f.ex+'" ('+c+') আগে থেকেই আছে':(f.near?'❓ মিল আছে: "'+f.near+'" — এটাই কি?':"")}
 function editRow(ix){editIx=ix;draw()}
 async function saveEdit(ix){var r=rows[ix],m=v("ed_m").trim();if(!m){alert("Model লিখুন");return}
  var o={model:m,quality:v("ed_q").trim(),buy:+v("ed_b")||0,sale:+v("ed_s")||0,rx:document.getElementById("ed_r").checked};

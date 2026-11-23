@@ -116,14 +116,14 @@ function draw(){
    if(admin){cm.push(p[0]);h+='<input class="cw" placeholder="মেলে এমন মডেল (ঐচ্ছিক), কমা দিয়ে লিখুন" value="'+esc(oth.join(", "))+'" onchange="setCompat(cm['+(cm.length-1)+'],this.value).then(run)">'}}
   h+='<table><tr><th>Type / Color</th>'+(showB?'<th>Buy</th>':'')+'<th>Sale</th><th>Status</th></tr>';
   by[k].forEach(function(ix){var r=rows[ix];
-   if(admin&&ix==editIx){h+='<tr><td colspan="4"><div class="row"><input id="ed_m" placeholder="Model" value="'+esc(r.model)+'"><input id="ed_q" placeholder="Type / Color" value="'+esc(r.quality)+'"></div><div class="row"><input id="ed_b" placeholder="Buy" value="'+esc(pv(r,"buy"))+'"><input id="ed_s" placeholder="Sale" value="'+esc(pv(r,"sale"))+'"></div><div class="row"><label style="color:#facc15;flex:1 1 100%"><input type="checkbox" id="ed_r"'+(r.rx?' checked':'')+'> RX Stock</label></div><div class="row"><button class="p" onclick="saveEdit('+ix+')">Save</button><button onclick="editIx=-1;draw()">Cancel</button></div></td></tr>';return}
+   if(admin&&ix==editIx){h+='<tr><td colspan="4"><div class="row"><input id="ed_m" placeholder="Model" value="'+esc(r.model)+'"><input id="ed_q" placeholder="Type / Color" value="'+esc(r.quality)+'"></div><div class="row"><input id="ed_b" placeholder="Buy" value="'+esc(pd(r,"buy"))+'"><input id="ed_s" placeholder="Sale" value="'+esc(pd(r,"sale"))+'"></div><div class="row"><label style="color:#facc15;flex:1 1 100%"><input type="checkbox" id="ed_r"'+(r.rx?' checked':'')+'> RX Stock</label></div><div class="row"><button class="p" onclick="saveEdit('+ix+')">Save</button><button onclick="editIx=-1;draw()">Cancel</button></div></td></tr>';return}
    h+='<tr><td class="q">'+esc(r.quality||"—")+(r.note?'<div class="mu">'+esc(r.note)+'</div>':'');
    if(admin)h+='<input class="wd" placeholder="⚠ সতর্কতা/রিকোয়ারমেন্ট" value="'+esc(r.warn)+'" onchange="upd('+ix+',\'warn\',this.value)">';
    else if(r.warn)h+='<div class="wr">⚠ '+esc(r.warn)+'</div>';
    h+=r.rx?'<div><span class="rxb">RX Stock</span></div>':'';
    h+='</td>';
-   if(admin)h+='<td><input value="'+esc(pv(r,"buy"))+'" onchange="updP('+ix+',\'buy\',this.value)"></td><td><input value="'+esc(pv(r,"sale"))+'" onchange="updP('+ix+',\'sale\',this.value)"></td><td><button class="'+(r.available?"av":"na")+'" onclick="upd('+ix+',\'available\','+!r.available+',1)">'+(r.available?"Available":"Not Available")+'</button> <button onclick="del('+ix+')">🗑</button> <button onclick="editRow('+ix+')">✏</button></td>';
-   else h+=(showB?'<td>৳'+esc(pv(r,'buy'))+'</td>':'')+'<td>৳'+esc(pv(r,'sale'))+'</td><td><span class="'+(r.available?"av":"na")+'">'+(r.available?"Available":"Not Available")+'</span></td>';
+   if(admin)h+='<td><input value="'+esc(pd(r,"buy"))+'" onchange="updP('+ix+',\'buy\',this.value)"></td><td><input value="'+esc(pd(r,"sale"))+'" onchange="updP('+ix+',\'sale\',this.value)"></td><td><button class="'+(r.available?"av":"na")+'" onclick="upd('+ix+',\'available\','+!r.available+',1)">'+(r.available?"Available":"Not Available")+'</button> <button onclick="del('+ix+')">🗑</button> <button onclick="editRow('+ix+')">✏</button></td>';
+   else h+=(showB?'<td>৳'+esc(pd(r,'buy'))+'</td>':'')+'<td>৳'+esc(pd(r,'sale'))+'</td><td><span class="'+(r.available?"av":"na")+'">'+(r.available?"Available":"Not Available")+'</span></td>';
    h+='</tr>'});h+='</table></div>'});
  document.getElementById("res").innerHTML=h||'<p class="mu">কিছু পাওয়া যায়নি</p>';
  document.getElementById("cats").innerHTML=cats.map(function(c){return'<button class="'+(c==cat?"on":"")+'" onclick="sel(\''+c+'\')">'+c+'</button>'}).join("");
@@ -191,8 +191,10 @@ function optList(){var h="";cats.slice(1).filter(function(c){return c!="Middle P
  var e=document.getElementById("optl");if(e)e.innerHTML=h}
 async function delOpt(id){if(!confirm("এই অপশন মুছবেন? আগে যোগ করা দাম মুছবে না।"))return;await api("options?id=eq."+id,{method:"DELETE"});opts=await api("options?select=*&order=pos")||[];optList();qrows()}
 var cm=[],editIx=-1;
-function pp(x){x=String(x==null?"":x).trim();if(/^\d+(\.\d+)?$/.test(x))return{n:+x,t:null};var m=x.match(/\d+/);return{n:m?+m[0]:0,t:x||null}}
+function pp(x){x=String(x==null?"":x).replace(/,/g,"").trim();if(/^\d+(\.\d+)?$/.test(x))return{n:+x,t:null};var m=x.match(/\d+/);return{n:m?+m[0]:0,t:x||null}}
 function pv(r,k){var t=r[k+"_txt"];return t?t:r[k]}
+function gp(n){if(n.length<=3)return n;return n.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,",")+","+n.slice(-3)}
+function pd(r,k){var x=pv(r,k);return String(x==null?"":x).replace(/\d{4,}/g,gp)}
 function pf(k,val,r){var q=pp(val),o={};o[k]=q.n;if(q.t)o[k+"_txt"]=q.t;else if(r&&(k+"_txt") in r)o[k+"_txt"]=null;return o}
 var mcache={};
 function nk(x){return x.toLowerCase().replace(/[^a-z0-9\u0980-\u09ff]/g,"")}
@@ -218,12 +220,12 @@ function drawUsed(){var q=v("uq").toLowerCase().trim(),h="";
  document.getElementById("uch").innerHTML=["All"].concat(UK).map(function(c){return'<button class="'+(c==ukind?"on":"")+'" onclick="ukind=\''+c+'\';drawUsed()">'+c+'</button>'}).join("");
  UK.forEach(function(k){if(ukind!="All"&&ukind!=k)return;var t="";
   urows.forEach(function(r,ix){if(r.kind!=k||(q&&r.model.toLowerCase().indexOf(q)<0))return;
-   t+='<tr><td class="q">'+esc(r.model)+'</td>'+(admin?'<td><input value="'+esc(pv(r,"sale"))+'" onchange="updUsed('+ix+',this.value)"> <button onclick="delUsed('+ix+')">🗑</button></td>':'<td>৳'+esc(pv(r,"sale"))+'</td>')+'</tr>'});
+   t+='<tr><td class="q">'+esc(r.model)+'</td>'+(admin?'<td><input value="'+esc(pd(r,"sale"))+'" onchange="updUsed('+ix+',this.value)"> <button onclick="delUsed('+ix+')">🗑</button></td>':'<td>৳'+esc(pd(r,"sale"))+'</td>')+'</tr>'});
   if(t)h+='<div class="card"><h3>Second Hand '+k+'</h3><table><tr><th>Model</th><th>Sale Price</th></tr>'+t+'</table></div>'});
  document.getElementById("ul").innerHTML=h||'<p class="mu">কিছু পাওয়া যায়নি</p>'}
 async function addUsed(){var m=v("um").trim();if(!m){alert("Model লিখুন");return}
  await api("used_items",{method:"POST",body:JSON.stringify(Object.assign({kind:v("uk"),model:m},pf("sale",v("us"))))});loadUsed()}
-async function updUsed(ix,val){var o=pf("sale",val,urows[ix]);Object.assign(urows[ix],o);await api("used_items?id=eq."+urows[ix].id,{method:"PATCH",body:JSON.stringify(o)})}
+async function updUsed(ix,val){var o=pf("sale",val,urows[ix]);Object.assign(urows[ix],o);await api("used_items?id=eq."+urows[ix].id,{method:"PATCH",body:JSON.stringify(o)});drawUsed()}
 async function delUsed(ix){if(!confirm("মুছে ফেলবেন?"))return;await api("used_items?id=eq."+urows[ix].id,{method:"DELETE"});loadUsed()}
 async function setCompat(m,txt){var o=txt.split(",").map(function(x){return x.trim()}).filter(function(x){return x&&x!=m});
  var old=groups.filter(function(g){return g.models.indexOf(m)>-1});

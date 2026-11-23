@@ -71,7 +71,7 @@ async function auth(kind){var e=v("em").trim(),p=v("pw");if(!e||p.length<6){aler
  tok=d.access_token;rt=d.refresh_token;saveRt();start(true)}
 function logout(){tok=null;rt=null;admin=false;saveRt();gate()}
 function gate(){document.getElementById("app").style.display="none";document.getElementById("auth").innerHTML="";
- document.getElementById("lg").innerHTML='<div class="card"><h3>Login</h3><p class="mu">Email ও পাসওয়ার্ড দিয়ে ঢুকুন। নতুন হলে Sign up চাপুন।</p><div class="row"><input id="em" type="email" placeholder="Gmail"><input id="pw" type="password" placeholder="Password"></div><div class="row"><button class="p" onclick="auth(\'in\')">Login</button><button onclick="auth(\'up\')">Sign up</button></div><div class="row"><button onclick="forgot()">পাসওয়ার্ড ভুলে গেছেন?</button></div></div>'}
+ document.getElementById("lg").innerHTML='<div class="card"><h3>Login</h3><p class="mu">Email ও পাসওয়ার্ড দিয়ে ঢুকুন। নতুন হলে Sign up চাপুন।</p><div class="row"><input id="em" type="email" placeholder="Gmail"><input id="pw" type="password" placeholder="Password"></div><div class="row"><button class="p" onclick="auth(\'in\')">Login</button><button onclick="auth(\'up\')">Sign up</button></div></div>'}
 async function who(){var r=await fetch(U+"/auth/v1/user",{headers:H()});var d=await r.json().catch(function(){return{}});return(d.email||"").toLowerCase()}
 function wait(s){document.getElementById("app").style.display="none";
  document.getElementById("auth").innerHTML='<button onclick="logout()">Logout</button>';
@@ -133,19 +133,6 @@ async function chPw(){var o=v("op"),p=v("np");if(!o){alert("পুরনো প�
  if(!c.ok){alert("পুরনো পাসওয়ার্ড ভুল");return}
  var r=await fetch(U+"/auth/v1/user",{method:"PUT",headers:H(),body:JSON.stringify({password:p})});
  alert(r.ok?"পাসওয়ার্ড বদলে গেছে":"হয়নি, Logout করে আবার Login দিয়ে চেষ্টা করুন");document.getElementById("op").value="";document.getElementById("np").value=""}
-function forgot(){document.getElementById("lg").innerHTML='<div class="card"><h3>পাসওয়ার্ড ভুলে গেছেন?</h3><p class="mu">Gmail দিন, ওই ইমেইলে একটা OTP কোড যাবে।</p><div class="row"><input id="fe" type="email" placeholder="Gmail"><button class="p" onclick="sendOtp()">OTP পাঠান</button></div><div id="fo" style="display:none"><div class="row"><input id="fc" inputmode="numeric" placeholder="OTP কোড"><input id="fp" type="password" placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬)"></div><div class="row"><button class="p" onclick="verifyOtp()">Verify করে ঢুকুন</button></div></div><div class="row"><button onclick="gate()">← Login-এ ফিরুন</button></div></div>'}
-async function sendOtp(){var e=v("fe").trim();if(!e){alert("Gmail দিন");return}
- var r=await fetch(U+"/auth/v1/otp",{method:"POST",headers:{apikey:K,"Content-Type":"application/json"},body:JSON.stringify({email:e,create_user:false})});
- var d=await r.json().catch(function(){return{}});
- if(!r.ok){alert(d.msg||d.error_description||"OTP পাঠানো যায়নি, একটু পরে আবার চেষ্টা করুন");return}
- document.getElementById("fo").style.display="block";alert("OTP পাঠানো হয়েছে। ইমেইল (স্প্যাম ফোল্ডারসহ) দেখুন")}
-async function verifyOtp(){var e=v("fe").trim(),c=v("fc").trim(),p=v("fp");if(!c){alert("OTP কোড দিন");return}if(p.length<6){alert("নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষর দিন");return}
- var r=await fetch(U+"/auth/v1/verify",{method:"POST",headers:{apikey:K,"Content-Type":"application/json"},body:JSON.stringify({type:"email",email:e,token:c})});
- var d=await r.json().catch(function(){return{}});
- if(!r.ok||!d.access_token){alert("OTP ভুল বা মেয়াদ শেষ");return}
- tok=d.access_token;rt=d.refresh_token;
- var u=await fetch(U+"/auth/v1/user",{method:"PUT",headers:H(),body:JSON.stringify({password:p})});
- saveRt();alert(u.ok?"নতুন পাসওয়ার্ড সেট হয়েছে":"ঢোকা হয়েছে, কিন্তু পাসওয়ার্ড বদলায়নি। Security থেকে আবার বদলান");start(true)}
 async function upd(ix,f,val,re){var r=rows[ix],o={};o[f]=val;r[f]=val;await api("items?id=eq."+r.id,{method:"PATCH",body:JSON.stringify(o)});if(re)draw()}
 async function del(ix){if(!confirm("মুছে ফেলবেন?"))return;await api("items?id=eq."+rows[ix].id,{method:"DELETE"});run()}
 var QP={Display:["AMOLED","IPS","Original"],Battery:["Original","Copy"],"Back Part":["Black","White","Blue"],"Middle Part":["Black","White","Blue"],Button:["Volume","Power"]},opts=[];

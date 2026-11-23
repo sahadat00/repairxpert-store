@@ -1,16 +1,4 @@
-<!-- FINAL-NOTE: নতুন ফিচারের জন্য Supabase SQL Editor-এ একবার নিচের SQL চালাতে হবে (পুরো setup.sql-এর নতুন অংশ):
-alter table items add column if not exists rx boolean default false;
-- - সেকেন্ড হ্যান্ড মোবাইল / ল্যাপটপ (শুধু মডেল + সেল প্রাইস)
-create table if not exists used_items(id uuid primary key default gen_random_uuid(), kind text not null, model text not null, sale int default 0, created_at timestamptz default now());
-alter table used_items enable row level security;
-drop policy if exists "view used" on used_items; drop policy if exists "write used" on used_items;
-create policy "view used" on used_items for select to authenticated using (
-  exists(select 1 from admins a where a.email = lower(auth.jwt()->>'email'))
-  or exists(select 1 from viewers v where v.email = lower(auth.jwt()->>'email') and v.status = 'approved'));
-create policy "write used" on used_items for all to authenticated
-  using (exists(select 1 from admins a where a.email = lower(auth.jwt()->>'email')))
-  with check (exists(select 1 from admins a where a.email = lower(auth.jwt()->>'email')));
--->
+<!-- নতুন ফিচারের SQL আছে update.sql ফাইলে -->
 <!DOCTYPE html>
 <html lang="bn"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -85,13 +73,21 @@ async function start(fresh){document.getElementById("lg").innerHTML="";
  document.getElementById("app").style.display="block";
  groups=await api("groups?select=id,models")||[];if(admin)opts=await api("options?select=*&order=pos")||[];forms();run();if(admin)people();setView("store")}
 var ppl=[];
-async function people(){ppl=(await api("viewers?select=*&order=created_at.desc")||[]).filter(function(x){return x.status=="pending"||x.status=="approved"}).sort(function(a,b){return(a.status=="pending"?0:1)-(b.status=="pending"?0:1)});
- var n=ppl.filter(function(x){return x.status=="pending"}).length,h='<div class="card"><h3>Viewer অনুমোদন'+(n?' <span class="na">'+n+' নতুন</span>':'')+'</h3>';
- if(!ppl.length)h+='<p class="mu">এখনো কেউ জয়েন করেনি</p>';
- ppl.forEach(function(x,i){var b=x.status=="approved"?'<button onclick="setV('+i+',\'rejected\')">Remove</button>':'<button class="p" onclick="setV('+i+',\'approved\')">✔ Approve</button>'+(x.status=="pending"?' <button onclick="setV('+i+',\'rejected\')">✖ Reject</button>':'');
-  h+='<div class="row" style="align-items:center"><span style="flex:3 1 150px;word-break:break-all">'+esc(x.email)+' <span class="mu">('+x.status+')</span></span><span>'+b+'</span></div>'});
+async function rpc(n,b){var go=function(){return fetch(U+"/rest/v1/rpc/"+n,{method:"POST",headers:H(),body:JSON.stringify(b||{})})};var r=await go();if(r.status==401&&rt){await refresh();r=await go()}var d=null;try{d=await r.json()}catch(e){}return{ok:r.ok,d:d}}
+async function people(){var rr=await rpc("admin_users");
+ if(rr.ok&&Array.isArray(rr.d))ppl=rr.d.map(function(x){return{email:x.uemail,status:x.ustatus,has:x.uhas,confirmed:x.uconfirmed}});
+ else ppl=(await api("viewers?select=*&order=created_at.desc")||[]).map(function(x){return{email:x.email,status:x.status,has:true,confirmed:true}});
+ var rk={pending:0,approved:1};ppl.sort(function(a,b){return(rk[a.status]==null?2:rk[a.status])-(rk[b.status]==null?2:rk[b.status])});
+ var n=ppl.filter(function(x){return x.status=="pending"}).length,h='<div class="card"><h3>ইউজার / অনুমোদন'+(n?' <span class="na">'+n+' নতুন</span>':'')+'</h3>';
+ if(!ppl.length)h+='<p class="mu">এখনো কেউ সাইন আপ করেনি</p>';
+ ppl.forEach(function(x,i){var b=x.status=="approved"?'':'<button class="p" onclick="setV('+i+',\'approved\')">✔ Approve</button> ';
+  h+='<div class="row" style="align-items:center"><span style="flex:3 1 150px;word-break:break-all">'+esc(x.email)+' <span class="mu">('+x.status+(x.confirmed?'':', ইমেইল কনফার্ম হয়নি')+')</span></span><span>'+b+'<button onclick="delU('+i+')">Remove</button></span></div>'});
  document.getElementById("ppl").innerHTML=h+'</div>';pc=n;nav()}
-async function setV(i,s){await api("viewers?email=eq."+encodeURIComponent(ppl[i].email),{method:"PATCH",body:JSON.stringify({status:s})});people()}
+async function setV(i,s){var x=ppl[i];await api(x.has?"viewers?email=eq."+encodeURIComponent(x.email):"viewers",{method:x.has?"PATCH":"POST",body:JSON.stringify(x.has?{status:s}:{email:x.email,status:s})});people()}
+async function delU(i){var x=ppl[i];if(!confirm(x.email+" কে Remove করবেন?\nতার অ্যাকাউন্ট সম্পূর্ণ মুছে যাবে, সে আর লগইন করতে পারবে না (চাইলে নতুন করে Sign up করতে পারবে)।"))return;
+ var r=await rpc("admin_delete_user",{target:x.email});
+ if(!r.ok){await api("viewers?email=eq."+encodeURIComponent(x.email),{method:"PATCH",body:JSON.stringify({status:"rejected"})});alert("অ্যাক্সেস বন্ধ করা হয়েছে। অ্যাকাউন্ট সম্পূর্ণ মুছতে update.sql-এর SQL একবার চালাতে হবে।")}
+ people()}
 function search(){clearTimeout(timer);timer=setTimeout(run,250)}
 async function run(){editIx=-1;mcache={};
  var q=v("q").toLowerCase().replace(/display|back part|middle part|button|battery/g,"").replace(/[(),*"]/g,"").trim();
@@ -146,7 +142,7 @@ function qrows(){var h="";qlist().forEach(function(q,i){var t='oninput="document
  document.getElementById("qs").innerHTML=h;document.getElementById("orow").style.display=SINGLE[v("nc")]?"none":"flex";document.getElementById("cwrap").style.display=v("nc")=="Display"?"block":"none"}
 async function add(){var m=v("nm").trim();if(!m){alert("Model লিখুন");return}
  var o=[];qlist().forEach(function(q,i){if(!document.getElementById("c"+i).checked)return;var n=q=="_"?"":(q||v("x"+i).trim());if(!n&&q!="_")return;
-  o.push({model:m,category:v("nc"),quality:n,buy:+v("b"+i)||0,sale:+v("s"+i)||0,warn:v("w"+i).trim(),note:v("nn").trim(),available:true,rx:document.getElementById("r"+i).checked})});
+  var rxv=document.getElementById("r"+i).checked;o.push(Object.assign({model:m,category:v("nc"),quality:n,buy:+v("b"+i)||0,sale:+v("s"+i)||0,warn:v("w"+i).trim(),note:v("nn").trim(),available:true},rxv?{rx:true}:{}))});
  if(!o.length){alert("কমপক্ষে একটা কোয়ালিটির দাম দিন");return}
  var cat=v("nc"),f=await findM(m,cat),tgt=null;
  if(f.ex)tgt=f.ex;else if(f.near&&confirm('❓ "'+f.near+'" নামে একটা মডেল আছে। আপনি কি এটাই যোগ করছেন?\n\nOK = হ্যাঁ, "'+f.near+'"-এর সাথে যোগ হবে\nCancel = না, "'+m+'" নতুন মডেল হিসেবে যোগ হবে'))tgt=f.near;
@@ -174,7 +170,7 @@ async function restore(el){var file=el.files[0];if(!file)return;var rs=parseCSV(
  var ex=await all("items?select=model,category,quality&order=id"),seen={};ex.forEach(function(x){seen[[x.model,x.category,x.quality].join("|")]=1});
  var ad=[];rs.forEach(function(r){if(r.length<hd.length)return;var o={};hd.forEach(function(k,i){o[k]=r[i]});
   var k=[o.model,o.category,o.quality||""].join("|");if(!o.model||seen[k])return;seen[k]=1;
-  ad.push({model:o.model,category:o.category,quality:o.quality||"",buy:+o.buy||0,sale:+o.sale||0,available:o.available!="false",warn:o.warn||"",note:o.note||"",rx:o.rx=="true"})});
+  ad.push(Object.assign({model:o.model,category:o.category,quality:o.quality||"",buy:+o.buy||0,sale:+o.sale||0,available:o.available!="false",warn:o.warn||"",note:o.note||""},o.rx=="true"?{rx:true}:{}))});
  if(!ad.length){alert("নতুন কিছু পাওয়া যায়নি, সব আগে থেকেই আছে");return}
  for(var i=0;i<ad.length;i+=500)await api("items",{method:"POST",body:JSON.stringify(ad.slice(i,i+500))});
  alert(ad.length+"টা আইটেম ফিরে এসেছে");run()}
@@ -198,11 +194,11 @@ async function mhint(){var el=document.getElementById("mh");if(!el)return;var m=
  var c=v("nc"),f=await findM(m,c);el.textContent=f.ex?'⚠ "'+f.ex+'" ('+c+') আগে থেকেই আছে':(f.near?'❓ মিল আছে: "'+f.near+'" — এটাই কি?':"")}
 function editRow(ix){editIx=ix;draw()}
 async function saveEdit(ix){var r=rows[ix],m=v("ed_m").trim();if(!m){alert("Model লিখুন");return}
- var o={model:m,quality:v("ed_q").trim(),buy:+v("ed_b")||0,sale:+v("ed_s")||0,rx:document.getElementById("ed_r").checked};
+ var o={model:m,quality:v("ed_q").trim(),buy:+v("ed_b")||0,sale:+v("ed_s")||0,};if("rx" in r||document.getElementById("ed_r").checked)o.rx=document.getElementById("ed_r").checked;
  await api("items?id=eq."+r.id,{method:"PATCH",body:JSON.stringify(o)});run()}
 
 var ukind="All",urows=[],UK=["Mobile","Laptop"];
-async function loadUsed(){urows=await api("used_items?select=*&order=created_at.desc&limit=500")||[];
+async function loadUsed(){var ur=await fetch(U+"/rest/v1/used_items?select=*&order=created_at.desc&limit=500",{headers:H()});if(!ur.ok){document.getElementById("uadd").innerHTML="";document.getElementById("ul").innerHTML='<p class="mu">এই ফিচার চালু করতে update.sql-এর SQL একবার চালাতে হবে।</p>';return}urows=await ur.json();
  document.getElementById("uadd").innerHTML=admin?'<div class="card"><h3>নতুন সেকেন্ড হ্যান্ড যোগ করুন</h3><div class="row"><select id="uk"><option>Mobile</option><option>Laptop</option></select><input id="um" placeholder="Model (iPhone 11, HP 840 G3)"></div><div class="row"><input id="us" type="number" placeholder="Sale Price"><button class="p" onclick="addUsed()">Add</button></div></div>':"";
  drawUsed()}
 function drawUsed(){var q=v("uq").toLowerCase().trim(),h="";

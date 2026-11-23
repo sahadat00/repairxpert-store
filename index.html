@@ -34,7 +34,7 @@ td input{width:70px;padding:5px}.cw{width:100%;margin:4px 0;font-size:12px}td in
 .qr{border-top:1px solid var(--bd);padding:8px 0;display:grid;grid-template-columns:1fr 1fr;gap:6px}.qr label{grid-column:1/3;font-weight:600}.qr input:not([type=checkbox]){width:100%}.qr input:last-child{grid-column:1/3}.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.row>*{flex:1 1 90px}
 .rxb{display:inline-block;margin-top:4px;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;color:#facc15;background:#facc1522;border:1px solid #facc15}.rxb.off{color:var(--mu);background:none;border-color:var(--bd)}
 </style></head><body><div class="w">
-<header><div class="brand"><img src="logo.png" alt="" onerror="this.style.display='none'"><h1>Repair <span>Xpert</span></h1><span style="font-size:11px;color:#facc15;border:1px solid #facc15;border-radius:99px;padding:1px 7px">v17</span></div><span id="auth"></span></header>
+<header><div class="brand"><img src="logo.png" alt="" onerror="this.style.display='none'"><h1>Repair <span>Xpert</span></h1><span style="font-size:11px;color:#facc15;border:1px solid #facc15;border-radius:99px;padding:1px 7px">v18</span></div><span id="auth"></span></header>
 <div id="lg"></div>
 <div id="app" style="display:none">
 <div class="chips" id="nav" style="margin-top:10px"></div>
@@ -208,9 +208,9 @@ async function findM(m,c){var L=await getModels(c),k=nk(m),names={},ex=null,near
  return{ex:ex,near:near,L:L}}
 async function mhint(){var el=document.getElementById("mh");if(!el)return;var m=v("nm").trim();if(!m){el.textContent="";return}
  var c=v("nc"),f=await findM(m,c);el.textContent=f.ex?'⚠ "'+f.ex+'" ('+c+') আগে থেকেই আছে':(f.near?'❓ মিল আছে: "'+f.near+'" — এটাই কি?':"")}
-function eaHtml(r){var ql=SINGLE[r.category]?[]:olist(r.category).concat([""]);var h='<div style="border-top:1px solid var(--bd);margin-top:8px;padding-top:8px"><b>＋ নতুন কোয়ালিটি যোগ করুন</b><p class="mu">যেটা যোগ করবেন তার টিক দিন ও দাম লিখুন। আগে থেকে থাকা কোয়ালিটি বাদ যাবে।</p>';
- ql.forEach(function(q,i){var t='oninput="document.getElementById(\'ec'+i+'\').checked=true"';
-  h+='<div class="qr"><label><input type="checkbox" id="ec'+i+'"> '+(q?esc(q):'<input id="ex'+i+'" placeholder="অন্য কোয়ালিটি (ঐচ্ছিক)">')+'</label><input id="eb'+i+'" placeholder="Buy (1300 বা 1300-1500)" '+t+'><input id="es'+i+'" placeholder="Sale (1300 বা 1300-1500)" '+t+'><input id="ew'+i+'" placeholder="⚠ সতর্কতা (ঐচ্ছিক)" style="grid-column:1/3">'+(r.category=="Display"&&/amoled|ips/i.test(q)?'<label style="font-weight:500;color:#60a5fa"><input type="checkbox" id="ef'+i+'"> With Frame (ফ্রেমসহ)</label>':'')+'<label style="font-weight:500;color:#facc15"><input type="checkbox" id="er'+i+'"> RX Stock</label></div>'});return h+'</div>'}
+function eaHtml(r){var ql=SINGLE[r.category]?[]:olist(r.category).concat([""]),ex=rows.filter(function(x){return x.model==r.model&&x.category==r.category}).map(function(x){return nk(x.quality||"")});var h='<div style="border-top:1px solid var(--bd);margin-top:8px;padding-top:8px"><b>＋ নতুন কোয়ালিটি যোগ করুন</b><p class="mu">যেটা যোগ করবেন তার টিক দিন ও দাম লিখুন। আগে থেকে থাকা কোয়ালিটি বাদ যাবে।</p>';
+ ql.forEach(function(q,i){var fc=r.category=="Display"&&/amoled|ips/i.test(q),pe=ex.indexOf(nk(q))>-1,fe2=fc&&ex.indexOf(nk(q+" With Frame"))>-1;if(q&&(fc?(pe&&fe2):pe))return;var ff=fc&&pe&&!fe2;var t='oninput="document.getElementById(\'ec'+i+'\').checked=true"';
+  h+='<div class="qr"><label><input type="checkbox" id="ec'+i+'"> '+(q?esc(q)+(ff?' With Frame':''):'<input id="ex'+i+'" placeholder="অন্য কোয়ালিটি (ঐচ্ছিক)">')+'</label><input id="eb'+i+'" placeholder="Buy (1300 বা 1300-1500)" '+t+'><input id="es'+i+'" placeholder="Sale (1300 বা 1300-1500)" '+t+'><input id="ew'+i+'" placeholder="⚠ সতর্কতা (ঐচ্ছিক)" style="grid-column:1/3">'+(fc&&!pe?'<label style="font-weight:500;color:#60a5fa"><input type="checkbox" id="ef'+i+'"> With Frame (ফ্রেমসহ)</label>':(ff?'<input type="checkbox" id="ef'+i+'" checked style="display:none">':''))+'<label style="font-weight:500;color:#facc15"><input type="checkbox" id="er'+i+'"> RX Stock</label></div>'});return h+'</div>'}
 function editRow(ix){editIx=ix;draw()}
 async function saveEdit(ix){var r=rows[ix],m=v("ed_m").trim();if(!m){alert("Model লিখুন");return}
  var q=v("ed_q").trim();if(document.getElementById("ed_f").checked)q=(q+" With Frame").trim();

@@ -34,7 +34,7 @@ td input{width:70px;padding:5px}.cw{width:100%;margin:4px 0;font-size:12px}td in
 .qr{border-top:1px solid var(--bd);padding:8px 0;display:grid;grid-template-columns:1fr 1fr;gap:6px}.qr label{grid-column:1/3;font-weight:600}.qr input:not([type=checkbox]){width:100%}.qr input:last-child{grid-column:1/3}.row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.row>*{flex:1 1 90px}
 .rxb{display:inline-block;margin-top:4px;border-radius:99px;padding:3px 10px;font-size:12px;font-weight:600;color:#facc15;background:#facc1522;border:1px solid #facc15}.rxb.off{color:var(--mu);background:none;border-color:var(--bd)}
 </style></head><body><div class="w">
-<header><div class="brand"><img src="logo.png" alt="" onerror="this.style.display='none'"><h1>Repair <span>Xpert</span></h1><span style="font-size:11px;color:#facc15;border:1px solid #facc15;border-radius:99px;padding:1px 7px">v14</span></div><span id="auth"></span></header>
+<header><div class="brand"><img src="logo.png" alt="" onerror="this.style.display='none'"><h1>Repair <span>Xpert</span></h1><span style="font-size:11px;color:#facc15;border:1px solid #facc15;border-radius:99px;padding:1px 7px">v15</span></div><span id="auth"></span></header>
 <div id="lg"></div>
 <div id="app" style="display:none">
 <div class="chips" id="nav" style="margin-top:10px"></div>
@@ -98,7 +98,7 @@ async function delU(i){var x=ppl[i];if(!confirm(x.email+" কে Remove কর�
  if(!r.ok){await api("viewers?email=eq."+encodeURIComponent(x.email),{method:"PATCH",body:JSON.stringify({status:"rejected"})});alert("অ্যাক্সেস বন্ধ করা হয়েছে। অ্যাকাউন্ট সম্পূর্ণ মুছতে update.sql-এর SQL একবার চালাতে হবে।")}
  people()}
 function search(){clearTimeout(timer);timer=setTimeout(run,250)}
-async function run(){editIx=-1;mcache={};
+async function run(){editIx=-1;aqIx=-1;mcache={};
  var q=v("q").toLowerCase().replace(/display|back part|middle part|button|battery/g,"").replace(/[(),*"]/g,"").trim();
  var p="items?select=*&order=model,category&limit=60"+(cat=="All"?"":"&category=eq."+encodeURIComponent(cat));
  if(q){var M=[];groups.forEach(function(g){if(g.models.some(function(m){return m.toLowerCase().indexOf(q)>-1}))M=M.concat(g.models)});
@@ -107,7 +107,7 @@ async function run(){editIx=-1;mcache={};
  rows=await api(p)||[];draw()}
 function sel(c){cat=c;run()}
 function draw(){
- var by={},showB=admin||SHOW_BUY;cm=[];
+ var by={},showB=admin||SHOW_BUY;cm=[];cks=[];
  rows.forEach(function(r,ix){var k=r.model+"|"+r.category;(by[k]=by[k]||[]).push(ix)});
  var h="";
  Object.keys(by).forEach(function(k){var p=k.split("|"),g=groups.filter(function(g){return g.models.indexOf(p[0])>-1})[0];
@@ -125,7 +125,7 @@ function draw(){
    h+='</td>';
    if(admin)h+='<td><input value="'+esc(pd(r,"buy"))+'" onchange="updP('+ix+',\'buy\',this.value)"></td><td><input value="'+esc(pd(r,"sale"))+'" onchange="updP('+ix+',\'sale\',this.value)"></td><td><button class="'+(r.available?"av":"na")+'" onclick="upd('+ix+',\'available\','+!r.available+',1)">'+(r.available?"Available":"Not Available")+'</button> <button onclick="del('+ix+')">🗑</button> <button onclick="editRow('+ix+')">✏</button></td>';
    else h+=(showB?'<td>৳'+esc(pd(r,'buy'))+'</td>':'')+'<td>৳'+esc(pd(r,'sale'))+'</td><td><span class="'+(r.available?"av":"na")+'">'+(r.available?"Available":"Not Available")+'</span></td>';
-   h+='</tr>'});h+='</table></div>'});
+   h+='</tr>'});h+='</table>';if(admin){cks.push(p);h+=aqHtml(cks.length-1,p)}h+='</div>'});
  document.getElementById("res").innerHTML=h||'<p class="mu">কিছু পাওয়া যায়নি</p>';
  document.getElementById("cats").innerHTML=cats.map(function(c){return'<button class="'+(c==cat?"on":"")+'" onclick="sel(\''+c+'\')">'+c+'</button>'}).join("");
  document.getElementById("auth").innerHTML='<span class="mu">'+(admin?"Admin":"Viewer")+'</span> <button onclick="logout()">Logout</button>'}
@@ -191,7 +191,7 @@ async function addOpt(){var n=v("no").trim();if(!n)return;
 function optList(){var h="";cats.slice(1).filter(function(c){return c!="Middle Part"}).forEach(function(c){h+='<div style="margin-top:8px"><b>'+c+'</b><div class="row">'+opts.filter(function(o){return o.category==c}).map(function(o){return'<button onclick="delOpt(\''+o.id+'\')">'+esc(o.name)+' ✕</button>'}).join("")+'</div></div>'});
  var e=document.getElementById("optl");if(e)e.innerHTML=h}
 async function delOpt(id){if(!confirm("এই অপশন মুছবেন? আগে যোগ করা দাম মুছবে না।"))return;await api("options?id=eq."+id,{method:"DELETE"});opts=await api("options?select=*&order=pos")||[];optList();qrows()}
-var cm=[],editIx=-1;
+var cm=[],editIx=-1,aqIx=-1,cks=[];
 function pp(x){x=String(x==null?"":x).replace(/,/g,"").trim();if(/^\d+(\.\d+)?$/.test(x))return{n:+x,t:null};var m=x.match(/\d+/);return{n:m?+m[0]:0,t:x||null}}
 function pv(r,k){var t=r[k+"_txt"];return t?t:r[k]}
 function gp(n){if(n.length<=3)return n;return n.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,",")+","+n.slice(-3)}
@@ -208,6 +208,19 @@ async function findM(m,c){var L=await getModels(c),k=nk(m),names={},ex=null,near
  return{ex:ex,near:near,L:L}}
 async function mhint(){var el=document.getElementById("mh");if(!el)return;var m=v("nm").trim();if(!m){el.textContent="";return}
  var c=v("nc"),f=await findM(m,c);el.textContent=f.ex?'⚠ "'+f.ex+'" ('+c+') আগে থেকেই আছে':(f.near?'❓ মিল আছে: "'+f.near+'" — এটাই কি?':"")}
+function aqHtml(i,p){if(aqIx!=i)return'<button style="margin-top:8px;width:100%" onclick="aqIx='+i+';draw()">＋ কোয়ালিটি যোগ করুন (AMOLED / Original ...)</button>';
+ var c=p[1],h='<div style="border-top:1px solid var(--bd);margin-top:8px;padding-top:8px"><b>নতুন কোয়ালিটি — '+esc(p[0])+'</b>';
+ if(!SINGLE[c])h+='<div class="row">'+olist(c).map(function(q){return'<label style="flex:1 1 40%;font-weight:600"><input type="radio" name="aq_q" value="'+esc(q)+'"> '+esc(q)+'</label>'}).join("")+'</div><div class="row"><input id="aq_x" placeholder="অন্য কোয়ালিটি (ঐচ্ছিক)" style="flex:1 1 100%"></div>';
+ if(c=="Display")h+='<div class="row"><label style="color:#60a5fa;flex:1 1 100%"><input type="checkbox" id="aq_f"> With Frame (ফ্রেমসহ)</label></div>';
+ h+='<div class="row"><input id="aq_b" placeholder="Buy (1300 বা 1300-1500)"><input id="aq_s" placeholder="Sale (1300 বা 1300-1500)"></div><div class="row"><input id="aq_w" placeholder="⚠ সতর্কতা (ঐচ্ছিক)" style="flex:1 1 100%"></div><div class="row"><label style="color:#facc15;flex:1 1 100%"><input type="checkbox" id="aq_r"> RX Stock</label></div><div class="row"><button class="p" onclick="saveAq('+i+')">Add</button><button onclick="aqIx=-1;draw()">Cancel</button></div></div>';return h}
+async function saveAq(i){var p=cks[i],c=p[1],q="";
+ if(!SINGLE[c]){var rd=document.querySelector("input[name=aq_q]:checked");q=v("aq_x").trim()||(rd?rd.value:"");if(!q){alert("কোয়ালিটি টিক দিন বা লিখুন");return}}
+ var fe=document.getElementById("aq_f");if(fe&&fe.checked)q=(q+" With Frame").trim();
+ if(!v("aq_b").trim()&&!v("aq_s").trim()){alert("Buy বা Sale দাম লিখুন");return}
+ if(rows.some(function(r){return r.model==p[0]&&r.category==c&&nk(r.quality||"")==nk(q)})){alert("এই কোয়ালিটি আগে থেকেই আছে। দাম বদলাতে ✏ Edit ব্যবহার করুন");return}
+ var o=Object.assign({model:p[0],category:c,quality:q,warn:v("aq_w").trim(),note:"",available:true},pf("buy",v("aq_b")),pf("sale",v("aq_s")));
+ if(document.getElementById("aq_r").checked)o.rx=true;
+ await api("items",{method:"POST",body:JSON.stringify(o)});run()}
 function editRow(ix){editIx=ix;draw()}
 async function saveEdit(ix){var r=rows[ix],m=v("ed_m").trim();if(!m){alert("Model লিখুন");return}
  var q=v("ed_q").trim();if(document.getElementById("ed_f").checked)q=(q+" With Frame").trim();
